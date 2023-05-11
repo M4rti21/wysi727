@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
 // import {clientId, clientSecret} from './clientInfo';
 const clientId = '21248';
 const clientSecret = 'DhLLTFGJIIL4g24FuVAFa3byzTxPAPmBUuspb6H6';
@@ -19,7 +20,7 @@ app.listen(5000, function () {
     console.log("App running on port 5000");
 });
 
-const tokenFilePath = 'C:/Users/M4rti/Projects/act1react/server/token';
+const tokenFilePath = path.resolve(__dirname, 'token');
 
 async function getToken() {
     const contents = fs.readFileSync(tokenFilePath, 'utf8');
@@ -108,10 +109,9 @@ app.get('/usrInfo/:username/', async function (req, res) {
             const data = await response.json();
             res.send(data);
         } catch (error) {
-            res.send({error: true});
+            res.send({error: error.toString()});
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error fetching data')
+        res.status(500).send({error: 'Error fetching data'})
     }
 });
