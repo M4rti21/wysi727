@@ -1,11 +1,18 @@
 import React from "react";
+import LineChart from "./LineChart";
+import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity} from "../interfaces/UserCardInterface";
+
+interface LineChartProps {
+    dataPoints: number[];
+    chartTitle?: string;
+}
 
 interface userData {
     data: any;
 }
 
 const UserCard: React.FC<userData> = (props) => {
-    const secondsToDhms = (seconds: number) => {
+    const secondsToDHMS = (seconds: number) => {
         seconds = Number(seconds);
         let d = Math.floor(seconds / (3600 * 24));
         let h = Math.floor(seconds % (3600 * 24) / 3600);
@@ -18,8 +25,8 @@ const UserCard: React.FC<userData> = (props) => {
         let sDisplay = s > 0 ? s + "s" : "";
         return dDisplay + hDisplay + mDisplay + sDisplay;
     }
-    const playtime = secondsToDhms(props.data.statistics.play_time);
-    const avgPlayTime = secondsToDhms(props.data.statistics.play_time / props.data.statistics.play_count);
+    const playtime = secondsToDHMS(props.data.statistics.play_time);
+    const avgPlayTime = secondsToDHMS(props.data.statistics.play_time / props.data.statistics.play_count);
     const hits_total: number = (props.data.statistics.count_50 + props.data.statistics.count_100 + props.data.statistics.count_300 + props.data.statistics.count_miss);
     const hits_miss_percent: number = props.data.statistics.count_miss / hits_total * 100;
     const hits_50_percent: number = props.data.statistics.count_50 / hits_total * 100;
@@ -31,10 +38,6 @@ const UserCard: React.FC<userData> = (props) => {
         x50: '#ffc107',
         xMiss: '#d9534f'
     }
-    const progressBarStyle = {
-        width: `${props.data.statistics.level.progress}%`,
-        height: 5
-    }
     const chart = {
         background: `conic-gradient(
             ${colors.x300} 0% ${hits_300_percent}%, 
@@ -45,8 +48,30 @@ const UserCard: React.FC<userData> = (props) => {
         width: 200,
         borderRadius: '50%'
     }
+    const height = 150;
+    const width = 565;
+
+    const normalizeArray = (arr: number[]) => {
+        const minValue = Math.min(...arr);
+        const maxValue = Math.max(...arr);
+        return arr.map((value) => {
+            return (value - minValue) / (maxValue - minValue) * height;
+        });
+    }
+
+    const yValues = normalizeArray(props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => obj.count));
+    const step = width / yValues.length;
+
+    const xValues = [];
+
+    for (let i = 0; i < yValues.length; i++) {
+        const number = (i * step);
+        xValues.push(number);
+    }
+
     return (
-        <div className="border rounded-4 mx-auto d-flex flex-column overflow-hidden mb-5" style={{width: 565, maxWidth: 565}}>
+        <div className="border rounded-4 mx-auto d-flex flex-column overflow-hidden mb-5"
+             style={{width: width, maxWidth: width}}>
             <div className="topPanel border-bottom" style={{height: 180}}>
                 <img src={props.data.cover_url} alt="pfp" style={{height: 180, width: '100%', objectFit: "cover"}}/>
             </div>
@@ -83,7 +108,7 @@ const UserCard: React.FC<userData> = (props) => {
                         <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
                         <div className="border flex-grow-1 overflow-hidden" style={{height: 5}}>
                             <div className="bg-warning"
-                                 style={progressBarStyle}>
+                                 style={{width: `${props.data.statistics.level.progress}%`, height: 5}}>
                             </div>
                         </div>
                     </div>
@@ -91,7 +116,8 @@ const UserCard: React.FC<userData> = (props) => {
                         <div className="border" style={chart}></div>
                         <ul style={{width: 150}}>
                             <li className="d-flex border-bottom flex-column">
-                                <h6 className="m-0 p-0">Accuracy:</h6><span>{props.data.statistics.hit_accuracy.toFixed(2)}%</span>
+                                <h6 className="m-0 p-0">Accuracy:</h6>
+                                <span>{props.data.statistics.hit_accuracy.toFixed(2)}%</span>
                             </li>
                             <li className="d-flex flex-row align-items-center justify-content-between"><span
                                 className="d-flex flex-row align-items-center gap-1"><div
@@ -126,7 +152,8 @@ const UserCard: React.FC<userData> = (props) => {
                                 }}></div>x0:</span>{hits_miss_percent.toFixed(2)}%
                             </li>
                             <li className="d-flex border-top flex-column">
-                                <h6 className="m-0 p-0">Max Combo:</h6><span>x{props.data.statistics.maximum_combo}</span>
+                                <h6 className="m-0 p-0">Max Combo:</h6>
+                                <span>{props.data.statistics.maximum_combo}x</span>
                             </li>
                         </ul>
                     </div>
@@ -140,6 +167,14 @@ const UserCard: React.FC<userData> = (props) => {
                             className="bi bi-hourglass"></i><span><b>Avg. Time x Play:</b> {avgPlayTime}</span></div>
                     </div>
                 </div>
+            </div>
+            <div className="historyPanel d-flex border-bottom p-3 d-flex flex-column">
+                <h6>Rank Graph:</h6>
+                <LineChart width={width} height={height} wValues={xValues} hValues={yValues} color={colors.x50}/>
+            </div>
+            <div className="historyPanel d-flex border-bottom p-3 d-flex flex-column">
+                <h6>Plays Graph:</h6>
+                <LineChart width={width} height={height} wValues={xValues} hValues={yValues} color={colors.x50}/>
             </div>
             {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/}
             {/*     style={{backgroundColor: '#2a2226'}}>*/}
