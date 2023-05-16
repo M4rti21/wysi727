@@ -1,9 +1,9 @@
-import Input from "../components/Input";
 import React, {useState} from "react";
-import UserCard from "../components/UserCard";
+import Input from "../components/Input";
 import '../interfaces/UserCardInterface'
+import UserCard from "../components/UserCard";
+import UserCard2 from "../components/UserCard2";
 import {User} from "../interfaces/UserCardInterface";
-import userCard from "../components/UserCard";
 
 const Info = () => {
     const userplaceholder = {
@@ -234,7 +234,7 @@ const Info = () => {
         <>
             <Input onSubmit={getData}/>
             {userData.id !== undefined ? (
-                <UserCard data={userData}/>
+                <UserCard2 data={userData}/>
             ) : (
                 <div>a</div>
             )}

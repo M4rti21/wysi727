@@ -6,10 +6,7 @@ const Navbar = () => {
             <nav className="bg-black align-items-center d-flex justify-content-center">
                 <ul className="nav">
                     <li className="nav-item">
-                        <Link className="nav-link" aria-current="page" to="/">Home</Link>
-                    </li>
-                    <li className="nav-item">
-                        <Link className="nav-link" to="/about">About</Link>
+                        <Link className="nav-link" to="/">About</Link>
                     </li>
                     <li className="nav-item">
                         <Link className="nav-link" to="/info">Info</Link>

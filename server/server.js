@@ -32,7 +32,6 @@ async function getToken() {
     if (parseInt(currentUnixTime) - parseInt(oldUnixTime) > expiration) {
         try {
             token = await getNewToken();
-            console.log(token);
             await writeNewToken(token, currentUnixTime);
             return token;
         } catch (error) {

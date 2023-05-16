@@ -112,50 +112,74 @@ const UserCard: React.FC<userData> = (props) => {
                             </div>
                         </div>
                     </div>
-                    <div className="d-flex flex-row p-3 p-3 border-bottom">
-                        <div className="border" style={chart}></div>
-                        <ul style={{width: 150}}>
-                            <li className="d-flex border-bottom flex-column">
-                                <h6 className="m-0 p-0">Accuracy:</h6>
-                                <span>{props.data.statistics.hit_accuracy.toFixed(2)}%</span>
-                            </li>
-                            <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                className="d-flex flex-row align-items-center gap-1"><div
-                                style={{
-                                    backgroundColor: colors.x300,
-                                    height: 15,
-                                    width: 15
-                                }}></div>x300:</span>{hits_300_percent.toFixed(2)}%
-                            </li>
-                            <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                className="d-flex flex-row align-items-center gap-1"><div
-                                style={{
-                                    backgroundColor: colors.x100,
-                                    height: 15,
-                                    width: 15
-                                }}></div>x100:</span>{hits_100_percent.toFixed(2)}%
-                            </li>
-                            <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                className="d-flex flex-row align-items-center gap-1"><div
-                                style={{
-                                    backgroundColor: colors.x50,
-                                    height: 15,
-                                    width: 15
-                                }}></div>x50:</span>{hits_50_percent.toFixed(2)}%
-                            </li>
-                            <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                className="d-flex flex-row align-items-center gap-1"><div
-                                style={{
-                                    backgroundColor: colors.xMiss,
-                                    height: 15,
-                                    width: 15
-                                }}></div>x0:</span>{hits_miss_percent.toFixed(2)}%
-                            </li>
-                            <li className="d-flex border-top flex-column">
-                                <h6 className="m-0 p-0">Max Combo:</h6>
-                                <span>{props.data.statistics.maximum_combo}x</span>
-                            </li>
-                        </ul>
+                    <div className="d-flex flex-column p-3 p-3 border-bottom">
+                        <div className="d-flex flex-row">
+                            <div className="border" style={chart}></div>
+                            <ul style={{width: 150}}>
+                                <li className="d-flex border-bottom flex-column">
+                                    <h6 className="m-0 p-0">Accuracy:</h6>
+                                    <span>{props.data.statistics.hit_accuracy.toFixed(2)}%</span>
+                                </li>
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.x300,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>x300:</span>{hits_300_percent.toFixed(2)}%
+                                </li>
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.x100,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>x100:</span>{hits_100_percent.toFixed(2)}%
+                                </li>
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.x50,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>x50:</span>{hits_50_percent.toFixed(2)}%
+                                </li>
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.xMiss,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>x0:</span>{hits_miss_percent.toFixed(2)}%
+                                </li>
+                                <li className="d-flex border-top flex-column">
+                                    <h6 className="m-0 p-0">Max Combo:</h6>
+                                    <span>{props.data.statistics.maximum_combo}x</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div className="d-flex flex-row justify-content-center gap-1 mt-3">
+                            <div className="d-flex flex-column justify-content-center align-items-center">
+                                <img src="/ranks/xh.svg" alt="xh" style={{height: 20}}/>
+                                <div className="fw-bold">{props.data.statistics.grade_counts.ssh}</div>
+                            </div>
+                            <div className="d-flex flex-column justify-content-center align-items-center">
+                                <img src="/ranks/x.svg" alt="x" style={{height: 20}}/>
+                                <div className="fw-bold">{props.data.statistics.grade_counts.ss}</div>
+                            </div>
+                            <div className="d-flex flex-column justify-content-center align-items-center">
+                                <img src="/ranks/sh.svg" alt="sh" style={{height: 20}}/>
+                                <div className="fw-bold">{props.data.statistics.grade_counts.sh}</div>
+                            </div>
+                            <div className="d-flex flex-column justify-content-center align-items-center">
+                                <img src="/ranks/s.svg" alt="s" style={{height: 20}}/>
+                                <div className="fw-bold">{props.data.statistics.grade_counts.s}</div>
+                            </div>
+                            <div className="d-flex flex-column justify-content-center align-items-center">
+                                <img src="/ranks/a.svg" alt="a" style={{height: 20}}/>
+                                <div className="fw-bold">{props.data.statistics.grade_counts.a}</div>
+                            </div>
+                        </div>
                     </div>
                     <div className="p-3">
                         <div className="d-flex gap-2"><i
