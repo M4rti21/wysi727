@@ -1,12 +1,12 @@
+const clientId = '####'; //TODO: osu!clientId here
+const clientSecret = '####'; //TODO: osu!clientSecret here
+
 const fs = require('fs');
 const express = require('express');
 const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-// import {clientId, clientSecret} from './clientInfo';
-const clientId = '21248';
-const clientSecret = 'DhLLTFGJIIL4g24FuVAFa3byzTxPAPmBUuspb6H6';
 
 app.use(cors());
 app.use(bodyParser.json());

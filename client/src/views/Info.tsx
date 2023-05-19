@@ -234,10 +234,8 @@ const Info = () => {
         <>
             <Input onSubmit={getData}/>
             {userData.id !== undefined ? (
-                <UserCard2 data={userData}/>
-            ) : (
-                <div>a</div>
-            )}
+                <UserCard data={userData}/>
+            ) : ''}
         </>
     );
 }

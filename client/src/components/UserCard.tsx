@@ -49,7 +49,7 @@ const UserCard: React.FC<userData> = (props) => {
         borderRadius: '50%'
     }
     const height = 150;
-    const width = 565;
+    const width = 600;
 
     const normalizeArray = (arr: number[]) => {
         const minValue = Math.min(...arr);
@@ -57,6 +57,14 @@ const UserCard: React.FC<userData> = (props) => {
         return arr.map((value) => {
             return (value - minValue) / (maxValue - minValue) * height;
         });
+    }
+    const rankYValues = normalizeArray(props.data.rank_history.data);
+    console.log(rankYValues);
+    const rankXValues = [];
+    const step2 = width / rankYValues.length;
+    for (let i = 0; i < rankYValues.length; i++) {
+        const number = (i * step2);
+        rankXValues.push(number);
     }
 
     const yValues = normalizeArray(props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => obj.count));
@@ -72,10 +80,10 @@ const UserCard: React.FC<userData> = (props) => {
     return (
         <div className="border rounded-4 mx-auto d-flex flex-column overflow-hidden mb-5"
              style={{width: width, maxWidth: width}}>
-            <div className="topPanel border-bottom" style={{height: 180}}>
+            <div className="topPanel" style={{height: 180}}>
                 <img src={props.data.cover_url} alt="pfp" style={{height: 180, width: '100%', objectFit: "cover"}}/>
             </div>
-            <div className="midPanel d-flex flex-row border-bottom">
+            <div className="midPanel d-flex flex-row border-bottom border-top">
                 <div className="leftPanel border-end d-flex flex-column overflow-hidden">
                     <img src={props.data.avatar_url} alt="pfp" style={{height: 180, width: 180}}/>
                     <div className="p-3 d-flex flex-column border-top">
@@ -103,7 +111,7 @@ const UserCard: React.FC<userData> = (props) => {
                         </div>
                     </div>
                 </div>
-                <div className="rightPanel">
+                <div className="rightPanel flex-grow-1">
                     <div className="d-flex flex-row align-items-center justify-content-between gap-3 p-3 border-bottom">
                         <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
                         <div className="border flex-grow-1 overflow-hidden" style={{height: 5}}>
@@ -115,8 +123,8 @@ const UserCard: React.FC<userData> = (props) => {
                     <div className="d-flex flex-column p-3 p-3 border-bottom">
                         <div className="d-flex flex-row">
                             <div className="border" style={chart}></div>
-                            <ul style={{width: 150}}>
-                                <li className="d-flex border-bottom flex-column">
+                            <ul style={{width: 180}}>
+                                <li className="d-flex border-bottom flex-column pb-2">
                                     <h6 className="m-0 p-0">Accuracy:</h6>
                                     <span>{props.data.statistics.hit_accuracy.toFixed(2)}%</span>
                                 </li>
@@ -152,13 +160,13 @@ const UserCard: React.FC<userData> = (props) => {
                                         width: 15
                                     }}></div>x0:</span>{hits_miss_percent.toFixed(2)}%
                                 </li>
-                                <li className="d-flex border-top flex-column">
+                                <li className="d-flex border-top flex-column pt-2">
                                     <h6 className="m-0 p-0">Max Combo:</h6>
                                     <span>{props.data.statistics.maximum_combo}x</span>
                                 </li>
                             </ul>
                         </div>
-                        <div className="d-flex flex-row justify-content-center gap-1 mt-3">
+                        <div className="d-flex flex-row justify-content-center gap-3 mt-1">
                             <div className="d-flex flex-column justify-content-center align-items-center">
                                 <img src="/ranks/xh.svg" alt="xh" style={{height: 20}}/>
                                 <div className="fw-bold">{props.data.statistics.grade_counts.ssh}</div>
@@ -194,7 +202,10 @@ const UserCard: React.FC<userData> = (props) => {
             </div>
             <div className="historyPanel d-flex border-bottom p-3 d-flex flex-column">
                 <h6>Rank Graph:</h6>
-                <LineChart width={width} height={height} wValues={xValues} hValues={yValues} color={colors.x50}/>
+                <div style={{transform : 'scaleY(-1)'}}>
+                    <LineChart width={width} height={height} wValues={rankXValues} hValues={rankYValues}
+                               color={colors.x50}/>
+                </div>
             </div>
             <div className="historyPanel d-flex border-bottom p-3 d-flex flex-column">
                 <h6>Plays Graph:</h6>
