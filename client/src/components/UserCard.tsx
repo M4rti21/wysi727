@@ -207,7 +207,7 @@ const UserCard: React.FC<userData> = (props) => {
                                color={colors.x50}/>
                 </div>
             </div>
-            <div className="historyPanel d-flex border-bottom p-3 d-flex flex-column">
+            <div className="historyPanel d-flex p-3 d-flex flex-column">
                 <h6>Plays Graph:</h6>
                 <LineChart width={width} height={height} wValues={xValues} hValues={yValues} color={colors.x50}/>
             </div>
