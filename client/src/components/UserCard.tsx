@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useEffect, useRef} from "react";
 import LineChart from "./LineChart";
 import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity} from "../interfaces/UserCardInterface";
+import Score from "./Score";
 
 interface LineChartProps {
     dataPoints: number[];
@@ -9,9 +10,10 @@ interface LineChartProps {
 
 interface userData {
     data: any;
+    scores: any[];
 }
 
-const UserCard: React.FC<userData> = (props) => {
+const UserCard: React.FC<userData> = (props: userData) => {
     const secondsToDHMS = (seconds: number) => {
         seconds = Number(seconds);
         let d = Math.floor(seconds / (3600 * 24));
@@ -33,24 +35,51 @@ const UserCard: React.FC<userData> = (props) => {
     const hits_100_percent: number = props.data.statistics.count_100 / hits_total * 100;
     const hits_300_percent: number = props.data.statistics.count_300 / hits_total * 100;
     const colors = {
-        x300: '#007bff',
-        x100: '#28a745',
-        x50: '#ffc107',
-        xMiss: '#d9534f'
+        x300: '#35d4fb',
+        x100: '#6cf128',
+        x50: '#fbc435',
+        xMiss: '#fc0606',
+        x: '#ffffff',
+        s: '#fbe40a',
+        a: '#65d60c',
+        b: '#066cf1',
+        c: '#b014dc',
+        d: '#e00414',
+        f: '#aaaaaa'
     }
-    const chart = {
+    const accChart = {
         background: `conic-gradient(
             ${colors.x300} 0% ${hits_300_percent}%, 
             ${colors.x100} ${hits_300_percent}% ${hits_300_percent + hits_100_percent}%, 
             ${colors.x50} ${hits_300_percent + hits_100_percent}% ${hits_300_percent + hits_100_percent + hits_50_percent}%,
             ${colors.xMiss} ${hits_300_percent + hits_100_percent + hits_50_percent}% ${hits_300_percent + hits_100_percent + hits_50_percent + hits_miss_percent}%)`,
-        height: 200,
-        width: 200,
+        minHeight: 200,
+        maxHeight: 200,
+        minWidth: 200,
+        maxWidth: 200,
+        borderRadius: '50%'
+    }
+    const ranks: number[] = [props.data.statistics.grade_counts.ssh, props.data.statistics.grade_counts.ss, props.data.statistics.grade_counts.sh, props.data.statistics.grade_counts.s, props.data.statistics.grade_counts.a];
+    const ranks_total: number = (props.data.statistics.grade_counts.ssh + props.data.statistics.grade_counts.ss + props.data.statistics.grade_counts.sh + props.data.statistics.grade_counts.s + props.data.statistics.grade_counts.a);
+    const bigrank = Math.max(...ranks);
+    const ranks_xh_percent: number = props.data.statistics.grade_counts.ssh / ranks_total * 100;
+    const ranks_x_percent: number = props.data.statistics.grade_counts.ss / ranks_total * 100;
+    const ranks_sh_percent: number = props.data.statistics.grade_counts.sh / ranks_total * 100;
+    const ranks_s_percent: number = props.data.statistics.grade_counts.s / ranks_total * 100;
+    const ranks_a_percent: number = props.data.statistics.grade_counts.a / ranks_total * 100;
+    const rankChart = {
+        background: `conic-gradient(
+            ${colors.x} 0% ${ranks_xh_percent + ranks_x_percent}%, 
+            ${colors.s} ${ranks_xh_percent + ranks_x_percent}% ${ranks_xh_percent + ranks_x_percent + ranks_sh_percent + ranks_s_percent}%, 
+            ${colors.a} ${ranks_xh_percent + ranks_x_percent + ranks_sh_percent + ranks_s_percent}% ${ranks_xh_percent + ranks_x_percent + ranks_sh_percent + ranks_s_percent + ranks_a_percent}%)`,
+        minHeight: 200,
+        maxHeight: 200,
+        minWidth: 200,
+        maxWidth: 200,
         borderRadius: '50%'
     }
     const height = 150;
     const width = 600;
-
     const normalizeArray = (arr: number[]) => {
         const minValue = Math.min(...arr);
         const maxValue = Math.max(...arr);
@@ -59,60 +88,60 @@ const UserCard: React.FC<userData> = (props) => {
         });
     }
     const rankYValues = normalizeArray(props.data.rank_history.data);
-    console.log(rankYValues);
     const rankXValues = [];
     const step2 = width / rankYValues.length;
     for (let i = 0; i < rankYValues.length; i++) {
         const number = (i * step2);
         rankXValues.push(number);
     }
-
     const yValues = normalizeArray(props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => obj.count));
     const step = width / yValues.length;
-
     const xValues = [];
-
     for (let i = 0; i < yValues.length; i++) {
         const number = (i * step);
         xValues.push(number);
     }
-
     return (
-        <div className="border rounded-4 mx-auto d-flex flex-column overflow-hidden mb-5"
-             style={{width: width, maxWidth: width}}>
-            <div className="topPanel" style={{height: 180}}>
-                <img src={props.data.cover_url} alt="pfp" style={{height: 180, width: '100%', objectFit: "cover"}}/>
-            </div>
-            <div className="midPanel d-flex flex-row border-bottom border-top">
-                <div className="leftPanel border-end d-flex flex-column overflow-hidden">
-                    <img src={props.data.avatar_url} alt="pfp" style={{height: 180, width: 180}}/>
-                    <div className="p-3 d-flex flex-column border-top">
-                        <h3 className="text-truncate p-0"
-                            style={{maxWidth: 180}}>{props.data.username}{props.data.is_supporter ?
-                            <i className="bi bi-suit-heart-fill ms-2"
-                               style={{color: '#fc64ac', fontSize: 20}}></i> : ''}</h3>
-                        <div>
-                            <span>Country:</span>
-                            <h5 className="d-flex flex-row gap-1 align-items-center"><img
-                                src={`https://flagcdn.com/24x18/${props.data.country.code.toLowerCase()}.png`}
-                                alt="flag"/>{props.data.country.name}</h5>
+        <div className="row mx-5 border">
+            <div className="midPanel col-12 row border m-0 p-0">
+                <div className="leftPanel col-12 col-sm-2 border m-0 p-0">
+                    <div className="ratio ratio-1x1 border"
+                         style={{
+                             backgroundImage: `url(${props.data.avatar_url})`,
+                             backgroundPosition: "center",
+                             backgroundSize: "cover"
+                         }}>
+                    </div>
+                    <a className="d-block text-center fs-4 text-align-center text-decoration-none text-light py-3 border-top"
+                       href={`https://osu.ppy.sh/users/${props.data.id}`} target="_blank">
+                        {props.data.username}
+                    </a>
+                    <div className="mx-3">
+                        <div><i className="bi bi-globe2 me-2"></i>Global Rank:</div>
+                        <div className="fs-5 ms-4">#{props.data.statistics.global_rank.toLocaleString()}</div>
+                    </div>
+                    <div className="mx-3">
+                        <div><img width="16" className="countryIco me-2" alt="ico"
+                                  src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>Country
+                            Rank:
                         </div>
-                        <div>
-                            <span>Global Rank:</span>
-                            <h5>#{props.data.statistics.global_rank}</h5>
+                        <div className="fs-5 ms-4">#{props.data.statistics.rank.country.toLocaleString()}<img
+                            src={`https://flagcdn.com/24x18/${props.data.country.code.toLowerCase()}.png`}
+                            alt="flag" className="mx-2"/></div>
+                    </div>
+                    <div className="mx-3">
+                        <div><i className="bi bi-capsule-pill me-2"></i>Performance:</div>
+                        <div className="fs-5 ms-4">{props.data.statistics.pp.toLocaleString()}pp
                         </div>
-                        <div>
-                            <span>Country Rank:</span>
-                            <h5>#{props.data.statistics.rank.country}</h5>
-                        </div>
-                        <div>
-                            <span>Performance:</span>
-                            <h5>{props.data.statistics.pp}pp</h5>
+                    </div>
+                    <div className="mx-3">
+                        <div><i className="bi bi-award-fill me-2"></i>Medals:</div>
+                        <div className="fs-5 ms-4">{props.data.user_achievements.length}
                         </div>
                     </div>
                 </div>
-                <div className="rightPanel flex-grow-1">
-                    <div className="d-flex flex-row align-items-center justify-content-between gap-3 p-3 border-bottom">
+                <div className="midPanel col-12 col-sm-8 col-xl-6 m-0 p-0">
+                    <div className="level col-12 d-flex flex-row align-items-center gap-3 p-3 border">
                         <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
                         <div className="border flex-grow-1 overflow-hidden" style={{height: 5}}>
                             <div className="bg-warning"
@@ -120,21 +149,19 @@ const UserCard: React.FC<userData> = (props) => {
                             </div>
                         </div>
                     </div>
-                    <div className="d-flex flex-column p-3 p-3 border-bottom">
-                        <div className="d-flex flex-row">
-                            <div className="border" style={chart}></div>
-                            <ul style={{width: 180}}>
-                                <li className="d-flex border-bottom flex-column pb-2">
-                                    <h6 className="m-0 p-0">Accuracy:</h6>
-                                    <span>{props.data.statistics.hit_accuracy.toFixed(2)}%</span>
-                                </li>
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.x300,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>x300:</span>{hits_300_percent.toFixed(2)}%
+                    <div className="d-flex flex-row flex-wrap m-0 p-0">
+                        <div className="chart col-12 col-xl-6 row border m-0 justify-content-center">
+                            <span
+                                className="text-center mt-2">Overall Accuracy: {props.data.statistics.hit_accuracy.toFixed(2)}%</span>
+                            <div className="m-3 col-auto" style={accChart}></div>
+                            <ul className="col-12">
+                                <li className="d-flex flex-row align-items-center justify-content-between">
+                                <span className="d-flex flex-row align-items-center gap-1">
+                                <div style={{
+                                    backgroundColor: colors.x300,
+                                    height: 15,
+                                    width: 15
+                                }}></div>300: {hits_300_percent.toFixed(2)}%</span><span>{props.data.statistics.count_300.toLocaleString()}</span>
                                 </li>
                                 <li className="d-flex flex-row align-items-center justify-content-between"><span
                                     className="d-flex flex-row align-items-center gap-1"><div
@@ -142,7 +169,7 @@ const UserCard: React.FC<userData> = (props) => {
                                         backgroundColor: colors.x100,
                                         height: 15,
                                         width: 15
-                                    }}></div>x100:</span>{hits_100_percent.toFixed(2)}%
+                                    }}></div>100: {hits_100_percent.toFixed(2)}%</span><span>{props.data.statistics.count_100.toLocaleString()}</span>
                                 </li>
                                 <li className="d-flex flex-row align-items-center justify-content-between"><span
                                     className="d-flex flex-row align-items-center gap-1"><div
@@ -150,7 +177,7 @@ const UserCard: React.FC<userData> = (props) => {
                                         backgroundColor: colors.x50,
                                         height: 15,
                                         width: 15
-                                    }}></div>x50:</span>{hits_50_percent.toFixed(2)}%
+                                    }}></div>50:&nbsp; {hits_50_percent.toFixed(2)}%</span><span>{props.data.statistics.count_50.toLocaleString()}</span>
                                 </li>
                                 <li className="d-flex flex-row align-items-center justify-content-between"><span
                                     className="d-flex flex-row align-items-center gap-1"><div
@@ -158,64 +185,74 @@ const UserCard: React.FC<userData> = (props) => {
                                         backgroundColor: colors.xMiss,
                                         height: 15,
                                         width: 15
-                                    }}></div>x0:</span>{hits_miss_percent.toFixed(2)}%
-                                </li>
-                                <li className="d-flex border-top flex-column pt-2">
-                                    <h6 className="m-0 p-0">Max Combo:</h6>
-                                    <span>{props.data.statistics.maximum_combo}x</span>
+                                    }}></div>0:&nbsp;&nbsp; {hits_miss_percent.toFixed(2)}%</span><span>{props.data.statistics.count_miss.toLocaleString()}</span>
                                 </li>
                             </ul>
                         </div>
-                        <div className="d-flex flex-row justify-content-center gap-3 mt-1">
-                            <div className="d-flex flex-column justify-content-center align-items-center">
-                                <img src="/ranks/xh.svg" alt="xh" style={{height: 20}}/>
-                                <div className="fw-bold">{props.data.statistics.grade_counts.ssh}</div>
-                            </div>
-                            <div className="d-flex flex-column justify-content-center align-items-center">
-                                <img src="/ranks/x.svg" alt="x" style={{height: 20}}/>
-                                <div className="fw-bold">{props.data.statistics.grade_counts.ss}</div>
-                            </div>
-                            <div className="d-flex flex-column justify-content-center align-items-center">
-                                <img src="/ranks/sh.svg" alt="sh" style={{height: 20}}/>
-                                <div className="fw-bold">{props.data.statistics.grade_counts.sh}</div>
-                            </div>
-                            <div className="d-flex flex-column justify-content-center align-items-center">
-                                <img src="/ranks/s.svg" alt="s" style={{height: 20}}/>
-                                <div className="fw-bold">{props.data.statistics.grade_counts.s}</div>
-                            </div>
-                            <div className="d-flex flex-column justify-content-center align-items-center">
-                                <img src="/ranks/a.svg" alt="a" style={{height: 20}}/>
-                                <div className="fw-bold">{props.data.statistics.grade_counts.a}</div>
-                            </div>
+                        <div className="chart col-12 col-xl-6 row border m-0 justify-content-center">
+                            <span
+                                className="text-center mt-2">Total Play Count: {props.data.statistics.play_count.toLocaleString()}</span>
+                            <div className="m-3 col-auto" style={rankChart}></div>
+                            <ul className="col-12">
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.x,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>X: {(ranks_x_percent + ranks_xh_percent).toFixed(2)}%</span><span>{(props.data.statistics.grade_counts.ss + props.data.statistics.grade_counts.ssh).toLocaleString()}</span>
+                                </li>
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.s,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>S: {(ranks_s_percent + ranks_sh_percent).toFixed(2)}%</span><span>{(props.data.statistics.grade_counts.s + props.data.statistics.grade_counts.sh).toLocaleString()}</span>
+                                </li>
+                                <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                    className="d-flex flex-row align-items-center gap-1"><div
+                                    style={{
+                                        backgroundColor: colors.a,
+                                        height: 15,
+                                        width: 15
+                                    }}></div>A: {ranks_a_percent.toFixed(2)}%</span><span>{props.data.statistics.grade_counts.a.toLocaleString()}</span>
+                                </li>
+                            </ul>
                         </div>
                     </div>
-                    <div className="p-3">
-                        <div className="d-flex gap-2"><i
-                            className="bi bi-clock"></i><span><b>Play Time:</b> {playtime}</span></div>
-                        <div className="d-flex gap-2"><i
-                            className="bi bi-joystick"></i><span><b>Play Count:</b> {props.data.statistics.play_count}</span>
+                    <div className="rank col-12 d-flex flex-column p-3 border m-0">
+                        <h6>Rank Graph:</h6>
+                        <div className="chartDiv" style={{transform: 'scaleY(-1)'}}>
+                            <LineChart wValues={rankXValues} hValues={rankYValues}
+                                       color={colors.x50}/>
                         </div>
-                        <div className="d-flex gap-2"><i
-                            className="bi bi-hourglass"></i><span><b>Avg. Time x Play:</b> {avgPlayTime}</span></div>
+                    </div>
+                    <div className="play col-12 d-flex flex-column p-3 m-0">
+                        <h6>Plays Graph:</h6>
+                        <div className="chartDiv">
+                            <LineChart wValues={xValues} hValues={yValues}
+                                       color={colors.x50}/>
+                        </div>
+
                     </div>
                 </div>
-            </div>
-            <div className="historyPanel d-flex border-bottom p-3 d-flex flex-column">
-                <h6>Rank Graph:</h6>
-                <div style={{transform : 'scaleY(-1)'}}>
-                    <LineChart width={width} height={height} wValues={rankXValues} hValues={rankYValues}
-                               color={colors.x50}/>
+                <div className="rightPanel col-4 border m-0 p-0 d-flex flex-column"
+                     style={{maxHeight: 850, overflowY: "scroll"}}>
+                    {props.scores.map((score) => (
+                        <Score data={score} colors={colors}></Score>
+                    ))}
                 </div>
             </div>
-            <div className="historyPanel d-flex p-3 d-flex flex-column">
-                <h6>Plays Graph:</h6>
-                <LineChart width={width} height={height} wValues={xValues} hValues={yValues} color={colors.x50}/>
-            </div>
-            {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/}
-            {/*     style={{backgroundColor: '#2a2226'}}>*/}
-            {/*</div>*/}
+            {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/
+            }
+            {/*     style={{backgroundColor: '#2a2226'}}>*/
+            }
+            {/*</div>*/
+            }
         </div>
-    );
+    )
+        ;
 }
 
 export default UserCard;

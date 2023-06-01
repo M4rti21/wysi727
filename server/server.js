@@ -1,6 +1,3 @@
-const clientId = '####'; //TODO: osu!clientId here
-const clientSecret = '####'; //TODO: osu!clientSecret here
-
 const fs = require('fs');
 const express = require('express');
 const app = express();
@@ -21,12 +18,15 @@ app.listen(5000, function () {
 });
 
 const tokenFilePath = path.resolve(__dirname, 'token');
-
+const contents = fs.readFileSync(tokenFilePath, 'utf8');
+const tokenData = contents.split('\n');
+const clientId = tokenData[0];
+const clientSecret = tokenData[1];
 async function getToken() {
     const contents = fs.readFileSync(tokenFilePath, 'utf8');
     const oldTokenData = contents.split('\n');
-    let token = oldTokenData[0];
-    const oldUnixTime = oldTokenData[1];
+    let token = oldTokenData[2];
+    const oldUnixTime = oldTokenData[3];
     const currentUnixTime = Math.floor(new Date().getTime() / 1000).toString();
     const expiration = 82800;
     if (parseInt(currentUnixTime) - parseInt(oldUnixTime) > expiration) {
@@ -71,6 +71,8 @@ function writeNewToken(token, currentUnixTime) {
         console.log('token erased')
     })
     const tokenData = [
+        clientId,
+        clientSecret,
         token,
         currentUnixTime
     ];
@@ -93,7 +95,8 @@ app.get('/usrInfo/:username/', async function (req, res) {
             const url = new URL(
                 `https://osu.ppy.sh/api/v2/users/${username}/osu`
             );
-            const params = {};
+            const params = {
+            };
             Object.keys(params)
                 .forEach(key => url.searchParams.append(key, params[key]));
             const headers = {
@@ -112,6 +115,39 @@ app.get('/usrInfo/:username/', async function (req, res) {
         }
     } catch (error) {
         res.status(500).send({error: 'Error fetching data'})
+    }
+});
+
+app.get('/usrScores/:userId/', async function (req, res) {
+    let userId = req.params.userId;
+    try {
+        const token = await getToken();
+        try {
+            const url = new URL(`https://osu.ppy.sh/api/v2/users/${userId}/scores/best`);
+            const params = {
+                include_fails: "1",
+                mode: "osu",
+                "limit": "9999999999999999999999999999999999999999",
+            };
+            Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
+            const headers = {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${token}`,
+            };
+            const response = await fetch(url, {
+                method: "GET",
+                headers,
+            });
+            const data = await response.json();
+            res.send(data);
+        } catch (error) {
+            console.error(error);
+            res.send({ error: error.toString() });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: "Error fetching data" });
     }
 });
 
