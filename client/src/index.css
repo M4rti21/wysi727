@@ -1,107 +1,137 @@
 :root {
-  --col-primary: #f5f5f5;
-  --col-secondary: #141414;
-  --col-accent: #7e7e7e;
-  --btn-primary: #979797;
-  --btn-secondary: #080808;
+    --col-primary: #f5f5f5;
+    --col-secondary: #141414;
+    --col-accent: #7e7e7e;
+    --btn-primary: #979797;
+    --btn-secondary: #080808;
 }
 
 @font-face {
-  font-family: "IBM Plex Mono";
-  src: url('./fonts/IBMPlexMono-Text.ttf');
-  font-style: normal;
-  font-weight: normal;
+    font-family: "IBM Plex Mono";
+    src: url('./fonts/IBMPlexMono-Text.ttf');
+    font-style: normal;
+    font-weight: normal;
 }
 
 @font-face {
-  font-family: "IBM Plex Mono";
-  src: url('./fonts/IBMPlexMono-SemiBold.ttf');
-  font-style: normal;
-  font-weight: bold;
+    font-family: "IBM Plex Mono";
+    src: url('./fonts/IBMPlexMono-SemiBold.ttf');
+    font-style: normal;
+    font-weight: bold;
 }
 
 body, html, main {
-  margin: 0;
-  padding: 0;
-  background-color: var(--col-secondary);
-  color: var(--col-primary);
+    margin: 0;
+    padding: 0;
+    background-color: var(--col-secondary);
+    color: var(--col-primary);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "IBM Plex Mono", sans-serif;
-  font-weight: bold;
-  margin: 0;
-  padding: 0;
+    font-family: "IBM Plex Mono", sans-serif;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
 }
+
 * {
-  font-family: "IBM Plex Mono", sans-serif;
-  font-weight: normal;
+    font-family: "IBM Plex Mono", sans-serif;
+    font-weight: normal;
 }
 
 .input-group-text {
-  width: 8rem;
+    width: 8rem;
 }
 
 .form-control {
-  max-width: 20rem;
+    max-width: 20rem;
 }
 
 .userCard {
-  background-color: var(--col-secondary);
+    background-color: var(--col-secondary);
 }
 
 .userCard * {
-  border-color: var(--col-accent);
-  outline-color: var(--col-accent);
+    border-color: var(--col-accent);
+    outline-color: var(--col-accent);
 }
 
 .countryIco {
-  filter: brightness(0) invert(1);
+    filter: brightness(0) invert(1);
 }
 
 a {
-  text-decoration: none;
+    text-decoration: none;
 }
 
-a:hover{
-  text-decoration: underline;
+a:hover {
+    text-decoration: underline;
 }
 
 * {
-  scrollbar-width: thin; /* For Firefox */
-  scrollbar-color: #888888 #dddddd; /* For Firefox */
-  box-sizing: border-box;
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: #888888 #dddddd; /* For Firefox */
+    box-sizing: border-box;
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  background-color: #dddddd00;
-  outline: #ffffff solid 2px;
+    width: 8px;
+    background-color: #dddddd00;
+    outline: #ffffff solid 2px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #888888;
-  border-radius: 4px;
-  cursor: pointer;
+    background-color: #888888;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #555555;
-  cursor: pointer;
+    background-color: #555555;
+    cursor: pointer;
 }
 
-.score {
-  position: relative;
-  filter: blur(8px);
+.beatmapImg {
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 }
 
-.score::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  filter: blur(8px);
-  z-index: -1;
+.popoverWrapper {
+    position: relative;
+    display: inline-block;
 }
+
+.popoverContent {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    left: 0;
+    top: -30px;
+    transform: translate(0, 10px);
+    background-color: #333333;
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    width: max-content;
+    font-size: 1rem;
+}
+
+.popoverContent::before {
+    position: absolute;
+    z-index: -1;
+    content: "";
+    right: calc(50% - 10px);
+    top: calc(100%);
+    border-style: solid;
+    border-width: 0 10px 10px 10px;
+    border-color: transparent transparent #333333 transparent;
+    transition-duration: 0.3s;
+    transition-property: transform;
+    transform: rotate(180deg);
+}
+
+.popoverWrapper:hover .popoverContent {
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, -20px);
+    transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+

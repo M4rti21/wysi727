@@ -127,6 +127,11 @@ export interface RankHistory {
     data?: (number)[] | null;
 }
 
+export interface userScoreSmall {
+    position: number;
+    score: ScoreInterface;
+}
+
 export interface ScoreInterface {
     accuracy: number;
     best_id: number;
@@ -135,7 +140,7 @@ export interface ScoreInterface {
     max_combo: number;
     mode: string;
     mode_int: number;
-    mods?: (null)[] | null;
+    mods?: string[] | null;
     passed: boolean;
     perfect: boolean;
     pp: number;
@@ -241,3 +246,5 @@ export interface Weight {
     percentage: number;
     pp: number;
 }
+
+

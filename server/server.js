@@ -118,6 +118,39 @@ app.get('/usrInfo/:username/', async function (req, res) {
     }
 });
 
+app.get('/beatmapInfo/:beatmapId/:userId', async function (req, res) {
+    let beatmapId = req.params.beatmapId;
+    let userId = req.params.userId;
+    try {
+        const token = await getToken();
+        try {
+            const url = new URL(
+                `https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}/scores/users/${userId}`
+            );
+            const params = {
+            };
+            Object.keys(params)
+                .forEach(key => url.searchParams.append(key, params[key]));
+            const headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": `Bearer ${token}`
+            };
+            const response = await fetch(url, {
+                method: "GET",
+                headers,
+            });
+            const data = await response.json();
+            res.send(data);
+        } catch (error) {
+            res.send({error: error.toString()});
+        }
+    } catch (error) {
+        res.status(500).send({error: 'Error fetching data'})
+    }
+});
+
+
 app.get('/usrScores/:userId/', async function (req, res) {
     let userId = req.params.userId;
     try {
