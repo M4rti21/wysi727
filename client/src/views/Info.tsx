@@ -61,21 +61,14 @@ const Info = () => {
         website: undefined
     }
     const [userData, setUserData] = useState<User>(emptyUser);
-    const [userScores, setUserScores] = useState<any[]>([]);
     let searching = false;
     const getData = async (username: string) => {
         setUserData(emptyUser);
-        setUserScores([]);
         searching = true;
         const response = await fetch(`http://localhost:5000/usrInfo/${username}/`);
         const newData = await response.json();
         setUserData(newData);
-        setUserScores(await getScores(newData.id));
         searching = false;
-    };
-    const getScores = async (username: User) => {
-        const response = await fetch(`http://localhost:5000/usrScores/${username}/`);
-        return await response.json();
     };
     return (
         <main>
@@ -88,7 +81,7 @@ const Info = () => {
                     </div>
                 ) : (userData.id !== undefined ?
                     (
-                        <UserCard data={userData} scores={userScores}/>
+                        <UserCard data={userData}/>
                     ) : '')}
         </main>
     );

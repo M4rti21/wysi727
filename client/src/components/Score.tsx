@@ -38,21 +38,6 @@ const Score = (props: propsInterface) => {
             setIsPlaying(!isPlaying);
         }
     }
-    const [userScore, setUserScore] = useState<userScoreSmall | null>(null);
-    const getUserScore = async (beatmapId: string, userId: string) => {
-        const response = await fetch(`http://localhost:5000/beatmapInfo/${beatmapId}/${userId}`);
-        return await response.json();
-    };
-
-    async function fetchUserScore() {
-        setUserScore(await getUserScore(props.data.beatmap.id.toString(), props.data.user.id.toString()));
-    }
-
-    useEffect(() => {
-        fetchUserScore().then(r => "");
-        return () => {
-        };
-    }, []);
     return (
         <div style={{
             position: "relative",
@@ -164,8 +149,8 @@ const Score = (props: propsInterface) => {
                         </span>
                         {Math.round(props.data.pp)}pp<span style={{fontSize: 10, color: "#bbbbbb"}}
                                                            className="d-flex flex-column text-end">
-                        <span>{Math.round(props.data.weight.percentage)}%</span>
-                        <span>{Math.round(props.data.weight.pp)}pp</span>
+                        <span>{props.data.weight?.percentage ? `${Math.round(props.data.weight.percentage)}%` : ''}</span>
+                        <span>{props.data.weight?.pp ? `${Math.round(props.data.weight.pp)}pp` : ''}</span>
                     </span>
                 </span>
                 </div>
@@ -191,10 +176,6 @@ const Score = (props: propsInterface) => {
                                 </a>
                             </button>) : ""}
                     </div>
-                    <div>#{userScore ? (<>{userScore.position}<i className="bi bi-globe2 ms-2"></i></>) : (
-                        <div className="spinner-border ms-1" style={{height: 18, width: 18}} role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>)}</div>
                 </div>
             </div>
         </div>

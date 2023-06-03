@@ -1,7 +1,9 @@
 import React, {useEffect, useRef, useState} from "react";
-import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity} from "../interfaces/UserCardInterface";
+import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity, User} from "../interfaces/UserCardInterface";
 import Score from "./Score";
 import {Bar, Doughnut, Line, Radar} from 'react-chartjs-2';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import 'chartjs-plugin-annotation';
 import {
     ArcElement,
     CategoryScale,
@@ -19,17 +21,32 @@ import {
 import FlagEmoji from "./FlagEmoji";
 import {Tooltip as ReactTooltip} from 'react-tooltip'
 import {registerables} from 'chart.js';
+import {ParallaxBanner} from "react-scroll-parallax";
 
-Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler);
-
+Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler, zoomPlugin);
 Chart.register(...registerables);
 
 interface userData {
     data: any;
-    scores: any[];
 }
 
+type Mode = 'x' | 'y' | 'xy';
+type ModeSnap = "x" | "y" | "nearest" | "index" | "dataset" | "point" | undefined;
+type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
 const UserCard: React.FC<userData> = (props: userData) => {
+    useEffect(() => {
+        getNewScores('best').then(() => console.log(userScores));
+    }, []);
+    const [userScores, setUserScores] = useState<any[]>([]);
+
+    async function getScores(username: string, type: string) {
+        const response = await fetch(`http://localhost:5000/usrScores/${username}/${type}`);
+        return await response.json();
+    }
+
+    const getNewScores = async (type: string) => {
+        setUserScores(await getScores(props.data.id, type));
+    }
     const secondsToDHMS = (seconds: number) => {
         seconds = Number(seconds);
         let d = Math.floor(seconds / (3600 * 24));
@@ -62,7 +79,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
         d: '#e00414',
         f: '#aaaaaa'
     }
-    Chart.defaults.backgroundColor = '#00000000';
+    Chart.defaults.backgroundColor = colors.x50;
     Chart.defaults.borderColor = '#ffffff11';
     Chart.defaults.color = '#ffffff';
     Chart.defaults.font.family = "IBM Plex Mono";
@@ -93,30 +110,93 @@ const UserCard: React.FC<userData> = (props: userData) => {
             },
         ],
     };
+    const getHistoryDates = (rankArray: any) => {
+        return rankArray.map(function (obj: any) {
+            const date = new Date(obj.date);
+            const day = date.getDate().toString().padStart(2, "0");
+            const month = (date.getMonth() + 1).toString().padStart(2, "0");
+            const year = date.getFullYear().toString().slice(2);
+            return `${day}/${month}/${year}`;
+        });
+    }
+    const getHistoryValues = (rankArray: any) => {
+        return rankArray.map(function (obj: any) {
+            return obj.rank;
+        });
+    }
     const rankHistoryData = {
-        labels: props.data.rank_history.data.map(() => ''),
+        labels: getHistoryDates(props.data.db_rank_history.global_rank),
         datasets: [{
             label: 'Rank',
-            data: props.data.rank_history.data,
+            data: getHistoryValues(props.data.db_rank_history.global_rank),
             fill: false,
             borderColor: colors.x50,
             tension: 0.1
         }]
     };
-    const rankHistoryOptions = {
+    const countryRankHistoryData = {
+        labels: getHistoryDates(props.data.db_rank_history.country_rank),
+        datasets: [{
+            label: 'Rank',
+            data: getHistoryValues(props.data.db_rank_history.country_rank),
+            fill: false,
+            borderColor: colors.x50,
+            tension: 0.1
+        }]
+    };
+    const historyChartOptions = {
+        responsive: true,
         scales: {
             y: {
                 reverse: true,
+                ticks: {
+                    min: 0, // it is for ignoring negative step.
+                    beginAtZero: true,
+                    stepSize: 1  // if i use this it always set it '1', which look very awkward if it have high value  e.g. '100'.
+                }
             },
+        },
+        elements: {
+            point: {
+                radius: 2
+            }
+        },
+        interaction: {
+            mode: 'index' as ModeSnap
         },
         plugins: {
             tooltip: {
                 displayColors: false
             },
-        }
+            zoom: {
+                zoom: {
+                    wheel: {
+                        enabled: true,
+                        modifierKey: 'ctrl' as ModeModifier
+                    },
+                    pinch: {
+                        enabled: true
+                    },
+                    mode: 'x' as Mode
+                },
+                pan: {
+                    enabled: true,
+                    mode: 'x' as Mode
+                }
+            }
+        },
+        pointHitRadius: 10,
+        pointHoverRadius: 4,
+
     };
     const playsHistoryData = {
-        labels: props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => obj.start_date),
+        labels: props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => {
+            const date = new Date(obj.start_date);
+            const day = date.getDate().toString().padStart(2, "0");
+            const month = (date.getMonth() + 1).toString().padStart(2, "0");
+            const year = date.getFullYear().toString().slice(2);
+            return `${day}/${month}/${year}`;
+        }),
         datasets: [{
             label: 'Play Count',
             data: props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => obj.count),
@@ -126,18 +206,56 @@ const UserCard: React.FC<userData> = (props: userData) => {
         }]
     };
     const playsHistoryOptions = {
+        responsive: true,
+        scales: {
+            y: {
+                ticks: {
+                    min: 0, // it is for ignoring negative step.
+                    beginAtZero: true,
+                    stepSize: 1  // if i use this it always set it '1', which look very awkward if it have high value  e.g. '100'.
+                }
+            },
+        },
+        elements: {
+            point: {
+                radius: 2
+            }
+        },
+        interaction: {
+            mode: 'index' as ModeSnap
+        },
         plugins: {
             tooltip: {
                 displayColors: false
+            },
+            zoom: {
+                zoom: {
+                    wheel: {
+                        enabled: true,
+                        modifierKey: 'ctrl' as ModeModifier
+                    },
+                    pinch: {
+                        enabled: true
+                    },
+                    mode: 'x' as Mode
+                },
+                pan: {
+                    enabled: true,
+                    mode: 'x' as Mode
+                }
             }
-        }
+        },
+        pointHitRadius: 10,
+        pointHoverRadius: 4,
+
     };
     let aimScore = 0;
     let speedScore = 0;
     let accScore = 0;
     let starsScore = 0;
     let constScore = 0;
-    console.log(props.scores[0]);
+    //  CALCULATE SKILLS
+    //
     //  Consistency:
     //      Calculate the standard deviation (SD) of the player's scores across their top 100 plays.
     //      Normalize the SD by dividing it by the maximum possible standard deviation across all players.
@@ -158,7 +276,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
     //      Calculate the average Beats Per Minute (BPM) of the songs in the player's top 100 plays.
     //      Normalize the average BPM by dividing it by the maximum possible BPM across all players.
     //      Multiply the normalized average BPM by 100 to obtain the speed score.
-    //
+    //      Max BPM = 300
     //      Speed Score = (Avg BPM / Max BPM) * 100
     //
     //  Accuracy:
@@ -173,7 +291,6 @@ const UserCard: React.FC<userData> = (props: userData) => {
         const mean = numbers.reduce((sum, num) => sum + num, 0) / n;
         const squaredDiffs = numbers.map(num => Math.pow(num - mean, 2));
         const variance = squaredDiffs.reduce((sum, num) => sum + num, 0) / n;
-        console.log(Math.sqrt(variance))
         return Math.sqrt(variance);
     }
     const allPPs: number[] = [];
@@ -197,7 +314,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
             FL: 0.2,
             EZ: 0.5,
         };
-        for (let score of props.scores) {
+        for (let score of userScores) {
             allPPs.push(Math.round(score.pp));
             const date = new Date(score.created_at);
             const year = date.getFullYear().toString().slice(2);
@@ -208,15 +325,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
             allPPdates.push(formattedDate);
             //CS
             if (score.mods?.includes("EZ")) {
-                if (score.mods?.includes("HR")) {
-                    if (score.beatmap.cs * 1.3 < 10) {
-                        avgCS += (score.beatmap.cs * 1.3) / 2;
-                    } else {
-                        avgCS += 10 / 2;
-                    }
-                } else {
-                    avgCS += score.beatmap.cs / 2;
-                }
+                avgCS += score.beatmap.cs / 2;
             } else if (score.mods?.includes("HR")) {
                 if (score.beatmap.cs * 1.3 < 10) {
                     avgCS += score.beatmap.cs * 1.3;
@@ -305,11 +414,11 @@ const UserCard: React.FC<userData> = (props: userData) => {
             allSpd.push((score.mods?.includes("DT") ? score.beatmap.bpm * 1.5 : score.mods?.includes("HT") ? score.beatmap.bpm * 0.75 : score.beatmap.bpm));
         }
 
-        avgCS /= props.scores.length * 10;
-        avgAR /= props.scores.length * 10;
-        avgHA /= props.scores.length * 10;
-        avgSR /= props.scores.length * 10;
-        avgSpd /= props.scores.length * 300;
+        avgCS /= userScores.length * 10;
+        avgAR /= userScores.length * 10;
+        avgHA /= userScores.length * 10;
+        avgSR /= userScores.length * 10;
+        avgSpd /= userScores.length * 300;
 
         accScore = Math.round(avgHA * 100);
 
@@ -320,7 +429,6 @@ const UserCard: React.FC<userData> = (props: userData) => {
         starsScore = avgSR > 100 ? 100 : Math.round(avgSR * 100);
         aimScore = (avgCS + avgHA + avgAR) * 100 > 100 ? 100 : Math.round((avgCS + avgHA + avgAR) * 100);
         speedScore = avgSpd > 100 ? 100 : Math.round(avgSpd * 100);
-        console.log(allSpd)
         constScore = Math.round(100 - (
             calculateStandardDeviation(allHA) +
             calculateStandardDeviation(allAR) +
@@ -329,9 +437,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
             calculateStandardDeviation(allSpd) / 4
         ));
     }
-
     calculateScores();
-
     const skillsData = {
         labels: [
             `Consistency - ${constScore}`,
@@ -375,14 +481,32 @@ const UserCard: React.FC<userData> = (props: userData) => {
         }
     };
     const ppData = {
-        labels: allPPdates.reverse(),
+        labels: allPPs.map(() => ''),
         datasets: [{
-            label: 'Top Plays',
+            label: 'PP',
             data: allPPs.reverse(),
-        }]
+        }],
     };
     const ppDataOptions = {
+        responsive: true,
+        pointHoverRadius: 4,
         maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: false
+            },
+            x: {
+                beginAtZero: false,
+                ticks: {
+                    display: false
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                displayColors: false
+            }
+        }
     };
     const [height, setHeight] = useState<number>(0);
     const divRef1 = useRef<HTMLDivElement | null>(null);
@@ -404,20 +528,18 @@ const UserCard: React.FC<userData> = (props: userData) => {
                 id="reactTooltip"
                 style={{zIndex: 3}}
             />
-            <div className="topPanel m-0 p-0" style={{height: 180}}>
-                <img src={props.data.cover_url} alt="pfp" style={{height: 180, width: '100%', objectFit: "cover"}}/>
-            </div>
-            <div className="midPanel col-12 row border m-0 p-0">
-                <div className="leftPanel col-12 col-sm-4 col-xl-2  border m-0 p-0"
-                     ref={divRef1}>
+            <div className="topPanel m-0 p-0 d-flex flex-row" style={{overflow: "hidden", position: "relative"}}>
+                <div>
                     <div className="ratio ratio-1x1 border"
                          style={{
                              backgroundImage: `url(${props.data.avatar_url})`,
                              backgroundPosition: "center",
-                             backgroundSize: "cover"
+                             backgroundSize: "cover",
+                             height: 250,
+                             width: 250
                          }}>
                     </div>
-                    <div className="w-100 pt-3 border-top">
+                    <div className="w-100 p-3 border">
                         <a data-tooltip-id={props.data.previous_usernames.length > 0 ? "reactTooltip" : ""}
                            data-tooltip-content={`A.K.A: ${JSON.stringify(props.data.previous_usernames).substring(1, JSON.stringify(props.data.previous_usernames).length - 1).replace(/"/g, '')}`}
                            className="d-block text-center fs-4 mb-2 text-align-center text-decoration-none text-light"
@@ -425,68 +547,84 @@ const UserCard: React.FC<userData> = (props: userData) => {
                             {props.data.username}
                         </a>
                     </div>
-                    <div className="mx-3 mb-2">
-                        <div>
-                            <i className="bi bi-globe2 me-2"></i>Global Rank:
-                        </div>
-                        <span className="fs-5 ms-4"
-                              data-tooltip-id="reactTooltip"
-                              data-tooltip-content={`Peak Rank:#${props.data.rank_highest.rank?.toLocaleString()}`}>
-                            #{props.data.statistics.global_rank?.toLocaleString()}
-                        </span>
-                    </div>
-                    <div className="mx-3 mb-2">
-                        <div><img width="16" className="countryIco me-2" alt="ico"
-                                  src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>Country
-                            Rank:
-                        </div>
-                        <div className="fs-5 ms-4 d-flex flex-row">
-                            #{props.data.statistics.rank.country?.toLocaleString()}
-                            <span className="ms-2"
-                                  data-tooltip-id="reactTooltip"
-                                  data-tooltip-content={props.data.country.name}>
-                                <FlagEmoji size={24} code={props.data.country.code}/>
-                            </span>
-                        </div>
-                    </div>
-                    <div className="mx-3 mb-2">
-                        <div><i className="bi bi-capsule-pill me-2"></i>Performance:</div>
-                        <div className="fs-5 ms-4">{Math.round(props.data.statistics.pp)?.toLocaleString()}pp
-                        </div>
-                    </div>
-                    <div className="mx-3 mb-2">
-                        <div>
-                            <i className="bi bi-chevron-double-up me-2"></i>Ranked Score:
-                        </div>
-                        <span className="fs-5 ms-4"
-                              data-tooltip-id="reactTooltip"
-                              data-tooltip-content={`Score: ${props.data.statistics.total_score.toLocaleString()}`}>
-                            {props.data.statistics.ranked_score.toLocaleString()}
-                        </span>
-                    </div>
-                    <div className="mx-3 mb-2">
-                        <div><i className="bi bi-award-fill me-2"></i>Medals:</div>
-                        <div className="fs-5 ms-4">{props.data.user_achievements.length}
-                        </div>
-                    </div>
-                    <div className="mx-3 mb-2">
-                        <div>
-                            <i className="bi bi-1-circle me-2"></i>Max Combo:
-                        </div>
-                        <div className="fs-5 ms-4">{props.data.statistics.maximum_combo}x</div>
-                    </div>
-                    <div className="mx-3 mb-2">
-                        <div>
-                            <i className="bi bi-clock me-2"></i>Play Time:
-                        </div>
-                        <span className="fs-5 ms-4"
-                              data-tooltip-id="reactTooltip"
-                              data-tooltip-content={playtime}>
-                            {Math.round(props.data.statistics.play_time / 60 / 60)}h
-                        </span>
-                    </div>
                 </div>
-                <div className="midPanel col-12 col-sm-8 col-xl-6  m-0 p-0">
+                <div className="flex-grow-1">
+                    <ParallaxBanner layers={
+                        [{
+                            image: props.data.cover_url,
+                            speed: -18
+                        }]}
+                                    style={{width: "100%", height: "100%"}}>
+                        <div className="p-3 h-100 w-100" style={{backdropFilter: "brightness(50%) blur(2px)"}}>
+                            <div className="d-flex flex-row flex-wrap gap-5">
+                                <div className="fs-3"
+                                     data-tooltip-id="reactTooltip"
+                                     data-tooltip-content={`Peak Rank:#${props.data.rank_highest.rank?.toLocaleString()}`}>
+                                    <i className="bi bi-globe2 me-2"></i>#{props.data.statistics.global_rank?.toLocaleString()}
+                                </div>
+                                <div>
+                                    <div className="fs-3 d-flex flex-row align-items-center">
+                                        <div className="d-flex flex-row align-items-center"
+                                             data-tooltip-id="reactTooltip"
+                                             data-tooltip-content={"peak country rank"}>
+                                            <img width="28" className="countryIco me-2" alt="ico"
+                                                 src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>
+                                            #{props.data.statistics.rank.country?.toLocaleString()}
+                                        </div>
+                                        <div className="ms-2 h-100 d-flex align-items-center"
+                                             data-tooltip-id="reactTooltip"
+                                             data-tooltip-content={props.data.country.name}>
+                                            <FlagEmoji size={32} code={props.data.country.code}/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="d-flex flex-row gap-3 mt-3">
+                                <div>
+                                    <div><i className="bi bi-coin me-2"></i>Performance:</div>
+                                    <div className="fs-5 ms-4">{Math.round(props.data.statistics.pp)?.toLocaleString()}pp
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>
+                                        <i className="bi bi-chevron-double-up me-2"></i>Ranked Score:
+                                    </div>
+                                    <div className="fs-5 ms-4"
+                                         data-tooltip-id="reactTooltip"
+                                         data-tooltip-content={`Score: ${props.data.statistics.total_score.toLocaleString()}`}>
+                                        {props.data.statistics.ranked_score.toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="d-flex flex-row gap-3 mt-3">
+                                <div>
+                                    <div><i className="bi bi-award-fill me-2"></i>Medals:</div>
+                                    <div className="fs-5 ms-4">{props.data.user_achievements.length}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>
+                                        <i className="bi bi-1-circle me-2"></i>Max Combo:
+                                    </div>
+                                    <div className="fs-5 ms-4">{props.data.statistics.maximum_combo}x</div>
+                                </div>
+                                <div>
+                                    <div>
+                                        <i className="bi bi-clock me-2"></i>Play Time:
+                                    </div>
+                                    <div className="fs-5 ms-4"
+                                         data-tooltip-id="reactTooltip"
+                                         data-tooltip-content={playtime}>
+                                        {Math.round(props.data.statistics.play_time / 60 / 60)}h
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </ParallaxBanner>
+                </div>
+            </div>
+            <div className="midPanel col-12 row border m-0 p-0" ref={divRef1}>
+                <div className="midPanel col-12 col-sm-8 col-xl-8  m-0 p-0">
                     <div className="level col-12 d-flex flex-row align-items-center gap-3 p-3 border">
                         <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
                         <div className="border flex-grow-1 overflow-hidden" style={{height: 5}}>
@@ -500,7 +638,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
                         <div className="chart col-12 col-lg-6 row border m-0 justify-content-center p-2">
                             <span
                                 className="text-center my-2">Overall Accuracy: {props.data.statistics.hit_accuracy.toFixed(2)}%</span>
-                            <div className="mt-2" style={{height: 200, width: 200}}><Doughnut data={hitData}/></div>
+                            <div className="mt-2" style={{height: 200, width: 200}}>
+                                <Doughnut data={hitData}/>
+                            </div>
                             <ul className="col-12">
                                 <li className="d-flex flex-row align-items-center justify-content-between">
                                 <span className="d-flex flex-row align-items-center gap-1">
@@ -539,7 +679,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
                         <div className="chart col-12 col-lg-6 row border m-0 justify-content-center p-2">
                             <span
                                 className="text-center my-2">Total Play Count: {props.data.statistics.play_count?.toLocaleString()}</span>
-                            <div className="" style={{height: 200, width: 200}}><Doughnut data={rankData}/></div>
+                            <div className="" style={{height: 200, width: 200}}>
+                                <Doughnut data={rankData}/>
+                            </div>
                             <ul className="col-12">
                                 <li className="d-flex flex-row align-items-center justify-content-between"><span
                                     className="d-flex flex-row align-items-center gap-1"><div
@@ -567,36 +709,57 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                 </li>
                             </ul>
                         </div>
-                        <div className="chart col-12 col-lg-6 m-0 justify-content-center align-items-center p-3">
+                        <div
+                            className="chart col-12 col-lg-6 m-0 d-flex flex-column justify-content-center align-items-center p-3">
                             <div className="text-center fst-italic">"""" Skill Set """"</div>
                             <div style={{marginTop: -40, marginBottom: -50}}>
                                 <Radar data={skillsData} options={skillsOptions}/>
                             </div>
                         </div>
-                        <div className="col-12 col-lg-6 border m-0 justify-content-center align-items-center p-3">
-                            <Bar data={ppData} options={ppDataOptions}/>
+                        <div
+                            className="col-12 col-lg-6 border m-0 d-flex flex-column justify-content-center align-items-center p-3">
+                            <div className="text-center fst-italic">Top {userScores.length} plays</div>
+                            <div className="w-100 flex-grow-1">
+                                <Bar data={ppData} options={ppDataOptions}/>
+                            </div>
                         </div>
-                    </div>
-                    <div className="rank col-12 d-flex flex-column p-3 border m-0">
-                        <h6>Rank Graph:</h6>
-                        <Line data={rankHistoryData} options={rankHistoryOptions}/>
-                    </div>
-                    <div className="play col-12 d-flex flex-column p-3 border m-0">
-                        <h6>Plays Graph:</h6>
-                        <Line data={playsHistoryData} options={playsHistoryOptions}/>
+                        <div className="rank col-12 d-flex flex-column p-3 border m-0">
+                            <h6>Global Rank Graph:</h6>
+                            <Line data={rankHistoryData} options={historyChartOptions}/>
+                        </div>
+                        <div className="rank col-12 d-flex flex-column p-3 border m-0">
+                            <h6>Country Rank Graph:</h6>
+                            <Line data={countryRankHistoryData} options={historyChartOptions}/>
+                        </div>
+                        <div className="play col-12 d-flex flex-column p-3 border m-0">
+                            <h6>Plays Graph:</h6>
+                            <Line data={playsHistoryData} options={playsHistoryOptions}/>
+                        </div>
                     </div>
                 </div>
                 <div className="rightPanel col-12 col-xl-4 border m-0 p-0 d-flex flex-column"
-                     style={{overflowY: "scroll", maxHeight: height}}>
-                    <div className="p-2 border text-center">
-                        Top {props.scores.length} plays:
+                     style={{overflowY: "scroll", height: 2250}}>
+                    <div className="p-3 m-0 border d-flex flex-row align-items-center justify-content-between">
+                        <h6 className="m-0 p-0">Top {userScores.length} plays:</h6>
+                        <div>
+                            <button className="text-light"
+                                    style={{backgroundColor: "#00000000", border: "none"}}
+                                    onClick={() => getNewScores('best').then(() => console.log(userScores))}>
+                                <i className="bi bi-bar-chart-line"></i></button>
+                            <button className="text-light"
+                                    style={{backgroundColor: "#00000000", border: "none"}}
+                                    onClick={() => getNewScores('firsts').then(() => console.log(userScores))}>
+                                <i className="bi bi-star"></i></button>
+                        </div>
+
                     </div>
-                    {props.scores.map((score, index) => (
-                        <Score data={score} colors={colors} num={index}></Score>
-                    ))}
+                    <div className="border d-flex flex-column m-0 p-0">
+                        {userScores.map((score, index) => (
+                            <Score data={score} colors={colors} num={index}></Score>
+                        ))}
+                    </div>
                 </div>
             </div>
-
             {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/
             }
             {/*     style={{backgroundColor: '#2a2226'}}>*/
@@ -604,8 +767,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
             {/*</div>*/
             }
         </div>
-    )
-        ;
+    );
 }
 
 export default UserCard;
