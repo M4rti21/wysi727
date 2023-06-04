@@ -1,8 +1,9 @@
-import React, {useEffect, useRef, useState} from "react";
-import {ScoreInterface, userScoreSmall} from "../interfaces/UserCardInterface";
+import React, {useRef, useState} from "react";
+import {ItemsEntity} from "../interfaces/ScoresInterface";
+import {ParallaxBanner} from "react-scroll-parallax";
 
 interface propsInterface {
-    data: ScoreInterface;
+    data: ItemsEntity;
     colors: {
         x300: string,
         x100: string,
@@ -39,30 +40,15 @@ const Score = (props: propsInterface) => {
         }
     }
     return (
-        <div style={{
-            position: "relative",
-            width: "100%",
-            height: height,
-        }}>
-            <div style={{
-                backgroundImage: `url(${props.data.beatmapset.covers.cover})`,
-                backgroundPosition: "center",
-                backgroundSize: "cover",
-                filter: "blur(4px) brightness(30%)",
-                zIndex: 1,
-                width: "100%",
-                height: height,
-                top: 0,
-                left: 0,
-            }}></div>
-            <div className="border p-2 m-0" style={{
-                position: "relative",
-                zIndex: 2,
-                top: -height,
-                left: 0,
-                height: height,
-                marginTop: -height
-            }}>
+        <ParallaxBanner
+            layers={[
+                {
+                    image: props.data.beatmapset.covers.cover,
+                    speed: 0
+                }]}
+            style={{width: "100%"}}>
+            <div className="border p-2 m-0 h-100 w-100"
+                 style={{backdropFilter: "brightness(40%) blur(4px)"}}>
                 <div className="d-flex flex-row align-items-center gap-3">
                     <div className="beatmapImg ps-1" style={{
                         backgroundImage: `url(${props.data.beatmapset.covers.list})`,
@@ -129,30 +115,32 @@ const Score = (props: propsInterface) => {
                 </div>
                 <div className="d-flex justify-content-between align-items-center">
                 <span className="d-flex flex-row gap-2" style={{fontSize: 14}}>
-                    {(props.data.accuracy * 100).toFixed(2)}% - {props.data.max_combo}x - {props.data.score.toLocaleString()}
+                    {(props.data.accuracy * 100).toFixed(2)}% - {props.data.max_combo}x - {props.data.total_score.toLocaleString()}
                 </span>
                 </div>
                 <div className="d-flex flex-row justify-content-between align-items-end">
-                    <div>
-                    <span
-                        style={{color: props.colors.x300}}>{props.data.statistics.count_300 + props.data.statistics.count_geki}</span>/
-                        <span
-                            style={{color: props.colors.x100}}>{props.data.statistics.count_100 + props.data.statistics.count_katu}</span>/
-                        <span style={{color: props.colors.x50}}>{props.data.statistics.count_50}</span>/
-                        <span style={{color: props.colors.xMiss}}>{props.data.statistics.count_miss}</span>
+                    <div className="d-flex flex-row mb-1">
+                        <div style={{color: props.colors.x300}}>
+                            {props.data.statistics.great}
+                        </div>
+                        /
+                        <div style={{color: props.colors.x100}}>
+                            {props.data.statistics.ok ? props.data.statistics.ok : '0'}
+                        </div>/
+                        <div style={{color: props.colors.x50}}>
+                            {props.data.statistics.meh ? props.data.statistics.meh : '0'}
+                        </div>/
+                        <div style={{color: props.colors.xMiss}}>
+                            {props.data.statistics.miss ? props.data.statistics.miss : '0'}
+                        </div>
                     </div>
-                    <span className="d-flex flex-row gap-2 justify-content-end mt-auto">
-                        <span>
-                            {props.data.mods?.map((mod) => (mod
-                            ))}
-                            {props.data.mods?.length ? " -" : ""}
-                        </span>
-                        {Math.round(props.data.pp)}pp<span style={{fontSize: 10, color: "#bbbbbb"}}
-                                                           className="d-flex flex-column text-end">
-                        <span>{props.data.weight?.percentage ? `${Math.round(props.data.weight.percentage)}%` : ''}</span>
-                        <span>{props.data.weight?.pp ? `${Math.round(props.data.weight.pp)}pp` : ''}</span>
-                    </span>
-                </span>
+                    <div className="d-flex flex-row gap-2 justify-content-end mt-auto">
+                        <div style={{fontSize: 10, color: "#bbbbbb"}}
+                             className="d-flex flex-row gap-1">
+                            <div>{props.data.weight?.pp ? `${Math.round(props.data.weight.pp)}pp` : ''}</div>
+                            <div>({props.data.weight?.percentage ? `${Math.round(props.data.weight.percentage)}%` : ''})</div>
+                        </div>
+                    </div>
                 </div>
                 <div className="d-flex flex-row justify-content-between">
                     <div>
@@ -176,9 +164,16 @@ const Score = (props: propsInterface) => {
                                 </a>
                             </button>) : ""}
                     </div>
+                    <div>
+                        {props.data.mods?.map((mod) => (
+                            <>{mod.acronym}</>
+                        ))}
+                        {props.data.mods?.length ? " - " : ""}
+                        {Math.round(props.data.pp)}pp
+                    </div>
                 </div>
             </div>
-        </div>
+        </ParallaxBanner>
     );
 }
 export default Score;

@@ -1,5 +1,6 @@
-import React, {useEffect, useRef, useState} from "react";
-import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity, User} from "../interfaces/UserCardInterface";
+import React, {useEffect, useState} from "react";
+import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity} from "../interfaces/UserCardInterface";
+import "../interfaces/ScoresInterface";
 import Score from "./Score";
 import {Bar, Doughnut, Line, Radar} from 'react-chartjs-2';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -22,9 +23,12 @@ import FlagEmoji from "./FlagEmoji";
 import {Tooltip as ReactTooltip} from 'react-tooltip'
 import {registerables} from 'chart.js';
 import {ParallaxBanner} from "react-scroll-parallax";
+import {ItemsEntity, ItemsEntity1, ItemsEntity2, scoresTypes} from "../interfaces/ScoresInterface";
+import 'chartjs-adapter-moment';
 
 Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler, zoomPlugin);
 Chart.register(...registerables);
+
 
 interface userData {
     data: any;
@@ -33,19 +37,103 @@ interface userData {
 type Mode = 'x' | 'y' | 'xy';
 type ModeSnap = "x" | "y" | "nearest" | "index" | "dataset" | "point" | undefined;
 type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
-const UserCard: React.FC<userData> = (props: userData) => {
-    useEffect(() => {
-        getNewScores('best').then(() => console.log(userScores));
-    }, []);
-    const [userScores, setUserScores] = useState<any[]>([]);
+type AxisType = "time" | undefined;
 
-    async function getScores(username: string, type: string) {
-        const response = await fetch(`http://localhost:5000/usrScores/${username}/${type}`);
+
+const scoresTitles = {
+    best: 'Best Scores',
+    first: 'First Place Scores',
+    pinned: 'Pinned Scores',
+    recent: 'Recent Scores',
+}
+const UserCard: React.FC<userData> = (props: userData) => {
+    const [activeScores, setActiveScores] = useState<ItemsEntity[] | ItemsEntity1[] | ItemsEntity2[]>([]);
+    const [searchingScores, setSearchingScores] = useState<boolean>(true);
+    const [scoresTitle, setScoresTitle] = useState<string>(scoresTitles.pinned);
+
+    const [userScores, setUserScores] = useState<scoresTypes>(
+        {
+            best: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0
+            },
+            firsts: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0
+            },
+            pinned: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0
+            },
+            recent: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0
+            }
+        }
+    );
+    const getFirstCountryLog = () => {
+        const today = new Date(props.data.db_rank_history.country_rank[0].date);
+        return today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear();
+    }
+    const firstCountryLog = getFirstCountryLog();
+
+    async function getScores(thing: string) {
+        const response = await fetch(`http://localhost:5000/usrScores/${props.data.id}/${thing}`);
         return await response.json();
     }
 
-    const getNewScores = async (type: string) => {
-        setUserScores(await getScores(props.data.id, type));
+    const getNewScores = async () => {
+        const newScores: scoresTypes = {
+            best: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0,
+            },
+            firsts: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0,
+            },
+            pinned: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0,
+            },
+            recent: {
+                items: [],
+                pagination: {
+                    hasMore: false
+                },
+                count: 0,
+            }
+        };
+        newScores.pinned.items = await getScores('pinned');
+        newScores.firsts.items = await getScores('firsts');
+        newScores.best.items = await getScores('best');
+        newScores.recent.items = await getScores('recent');
+        setSearchingScores(true);
+        setUserScores(newScores);
+        setActiveScores(newScores.pinned.items);
+        setScoresTitle(scoresTitles.pinned);
+        setSearchingScores(false);
     }
     const secondsToDHMS = (seconds: number) => {
         seconds = Number(seconds);
@@ -110,13 +198,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
             },
         ],
     };
-    const getHistoryDates = (rankArray: any) => {
+    const getHistoryDates = (rankArray: { date: Date, rank: number }[]) => {
         return rankArray.map(function (obj: any) {
-            const date = new Date(obj.date);
-            const day = date.getDate().toString().padStart(2, "0");
-            const month = (date.getMonth() + 1).toString().padStart(2, "0");
-            const year = date.getFullYear().toString().slice(2);
-            return `${day}/${month}/${year}`;
+            return new Date(obj.date);
         });
     }
     const getHistoryValues = (rankArray: any) => {
@@ -144,17 +228,23 @@ const UserCard: React.FC<userData> = (props: userData) => {
             tension: 0.1
         }]
     };
+    const today = new Date();
+    const daysAgo = new Date(new Date().setDate(today.getDate() - 90)).setHours(0, 0, 0);
     const historyChartOptions = {
         responsive: true,
         scales: {
             y: {
                 reverse: true,
                 ticks: {
-                    min: 0, // it is for ignoring negative step.
+                    min: 0,
                     beginAtZero: true,
-                    stepSize: 1  // if i use this it always set it '1', which look very awkward if it have high value  e.g. '100'.
+                    stepSize: 1
                 }
             },
+            x: {
+                type: 'time' as AxisType,
+                min: daysAgo,
+            }
         },
         elements: {
             point: {
@@ -172,17 +262,23 @@ const UserCard: React.FC<userData> = (props: userData) => {
                 zoom: {
                     wheel: {
                         enabled: true,
-                        modifierKey: 'ctrl' as ModeModifier
+                        modifierKey: 'alt' as ModeModifier
                     },
                     pinch: {
-                        enabled: true
+                        enabled: true,
+                        modifierKey: 'alt' as ModeModifier
                     },
                     mode: 'x' as Mode
                 },
                 pan: {
                     enabled: true,
-                    mode: 'x' as Mode
-                }
+                    mode: 'x' as Mode,
+                    modifierKey: 'alt' as ModeModifier
+                },
+                rangeMin: {
+                    x: 1,
+                    y: 1
+                },
             }
         },
         pointHitRadius: 10,
@@ -210,9 +306,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
         scales: {
             y: {
                 ticks: {
-                    min: 0, // it is for ignoring negative step.
+                    min: 0,
                     beginAtZero: true,
-                    stepSize: 1  // if i use this it always set it '1', which look very awkward if it have high value  e.g. '100'.
+                    stepSize: 1
                 }
             },
         },
@@ -294,7 +390,6 @@ const UserCard: React.FC<userData> = (props: userData) => {
         return Math.sqrt(variance);
     }
     const allPPs: number[] = [];
-    const allPPdates: string[] = [];
     const calculateScores = () => {
         let avgCS = 0;
         let avgAR = 0;
@@ -314,19 +409,12 @@ const UserCard: React.FC<userData> = (props: userData) => {
             FL: 0.2,
             EZ: 0.5,
         };
-        for (let score of userScores) {
+        for (let score of userScores.best.items) {
             allPPs.push(Math.round(score.pp));
-            const date = new Date(score.created_at);
-            const year = date.getFullYear().toString().slice(2);
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-
-            const formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
-            allPPdates.push(formattedDate);
             //CS
-            if (score.mods?.includes("EZ")) {
+            if (score.mods.some(obj => obj.acronym === 'EZ')) {
                 avgCS += score.beatmap.cs / 2;
-            } else if (score.mods?.includes("HR")) {
+            } else if (score.mods.some(obj => obj.acronym === 'HR')) {
                 if (score.beatmap.cs * 1.3 < 10) {
                     avgCS += score.beatmap.cs * 1.3;
                     allCS.push(score.beatmap.cs * 1.3);
@@ -339,19 +427,19 @@ const UserCard: React.FC<userData> = (props: userData) => {
                 allCS.push(score.beatmap.cs);
             }
             //AR
-            if (score.mods?.includes("EZ")) {
-                if (score.mods?.includes("DT")) {
+            if (score.mods.some(obj => obj.acronym === 'EZ')) {
+                if (score.mods.some(obj => obj.acronym === 'DT')) {
                     avgAR += (score.beatmap.ar * 0.5) * 1.33;
                     allAR.push((score.beatmap.ar * 0.5) * 1.33);
-                } else if (score.mods?.includes("HT")) {
+                } else if (score.mods.some(obj => obj.acronym === 'HT')) {
                     avgAR += (score.beatmap.ar * 0.5) * 0.67;
                     allAR.push((score.beatmap.ar * 0.5) * 0.67);
                 } else {
                     avgAR += score.beatmap.ar * 0.5;
                     allAR.push(score.beatmap.ar * 0.5);
                 }
-            } else if (score.mods?.includes("HR")) {
-                if (score.mods?.includes("DT")) {
+            } else if (score.mods.some(obj => obj.acronym === 'HR')) {
+                if (score.mods.some(obj => obj.acronym === 'DT')) {
                     if (score.beatmap.ar * 1.4 * 1.33 < 11) {
                         avgAR += score.beatmap.ar * 1.4 * 1.33;
                         allAR.push(score.beatmap.ar * 1.4 * 1.33);
@@ -359,7 +447,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
                         avgAR += 11;
                         allAR.push(11);
                     }
-                } else if (score.mods?.includes("HT")) {
+                } else if (score.mods.some(obj => obj.acronym === 'HT')) {
                     if (score.beatmap.ar * 1.4 * 0.67 < 11) {
                         avgAR += score.beatmap.ar * 1.4 * 0.67;
                         allAR.push(score.beatmap.ar * 1.4 * 0.67);
@@ -375,10 +463,10 @@ const UserCard: React.FC<userData> = (props: userData) => {
                         allAR.push(10);
                     }
                 }
-            } else if (score.mods?.includes("DT")) {
+            } else if (score.mods.some(obj => obj.acronym === 'DT')) {
                 avgAR += score.beatmap.ar * 1.33;
                 allAR.push(score.beatmap.ar * 1.33);
-            } else if (score.mods?.includes("HT")) {
+            } else if (score.mods.some(obj => obj.acronym === 'HT')) {
                 avgAR += score.beatmap.ar * 0.67;
                 allAR.push(score.beatmap.ar * 0.67);
             } else {
@@ -388,21 +476,21 @@ const UserCard: React.FC<userData> = (props: userData) => {
 
             let starRating = score.beatmap.difficulty_rating;
 
-            if (score.mods?.includes("EZ")) {
+            if (score.mods.some(obj => obj.acronym === 'EZ')) {
                 starRating *= modFactors.EZ;
             }
-            if (score.mods?.includes("HR")) {
+            if (score.mods.some(obj => obj.acronym === 'HR')) {
                 starRating *= modFactors.HR;
             }
 
-            if (score.mods?.includes("DT")) {
+            if (score.mods.some(obj => obj.acronym === 'DT')) {
                 starRating *= modFactors.DT;
             }
-            if (score.mods?.includes("HT")) {
+            if (score.mods.some(obj => obj.acronym === 'HT')) {
                 starRating *= modFactors.HT;
             }
 
-            if (score.mods?.includes("FL")) {
+            if (score.mods.some(obj => obj.acronym === 'FL')) {
                 starRating *= modFactors.FL;
             }
 
@@ -410,22 +498,18 @@ const UserCard: React.FC<userData> = (props: userData) => {
             allHA.push(score.beatmap.accuracy);
             avgSR += starRating;
             allSR.push(starRating);
-            avgSpd += score.mods?.includes("DT") ? score.beatmap.bpm * 1.5 : score.mods?.includes("HT") ? score.beatmap.bpm * 0.75 : score.beatmap.bpm;
-            allSpd.push((score.mods?.includes("DT") ? score.beatmap.bpm * 1.5 : score.mods?.includes("HT") ? score.beatmap.bpm * 0.75 : score.beatmap.bpm));
+            avgSpd += score.mods.some(obj => obj.acronym === 'DT') ? score.beatmap.bpm * 1.5 : score.mods.some(obj => obj.acronym === 'HT') ? score.beatmap.bpm * 0.75 : score.beatmap.bpm;
+            allSpd.push((score.mods.some(obj => obj.acronym === 'DT') ? score.beatmap.bpm * 1.5 : score.mods.some(obj => obj.acronym === 'HT') ? score.beatmap.bpm * 0.75 : score.beatmap.bpm));
         }
-
-        avgCS /= userScores.length * 10;
-        avgAR /= userScores.length * 10;
-        avgHA /= userScores.length * 10;
-        avgSR /= userScores.length * 10;
-        avgSpd /= userScores.length * 300;
-
+        avgCS /= userScores.best.items.length * 10;
+        avgAR /= userScores.best.items.length * 10;
+        avgHA /= userScores.best.items.length * 10;
+        avgSR /= userScores.best.items.length * 10;
+        avgSpd /= userScores.best.items.length * 300;
         accScore = Math.round(avgHA * 100);
-
         avgCS *= 0.4;
         avgHA *= 0.6;
         avgAR *= 0.2;
-
         starsScore = avgSR > 100 ? 100 : Math.round(avgSR * 100);
         aimScore = (avgCS + avgHA + avgAR) * 100 > 100 ? 100 : Math.round((avgCS + avgHA + avgAR) * 100);
         speedScore = avgSpd > 100 ? 100 : Math.round(avgSpd * 100);
@@ -437,6 +521,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
             calculateStandardDeviation(allSpd) / 4
         ));
     }
+    useEffect(() => {
+        getNewScores().then()
+    }, []);
     calculateScores();
     const skillsData = {
         labels: [
@@ -450,7 +537,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
             label: 'Skill set',
             data: [constScore, speedScore, aimScore, starsScore, accScore],
             fill: true,
-            backgroundColor: '#FF638422',
+            backgroundColor: '#FF638444',
             borderColor: '#FF6384FF',
         }]
     };
@@ -473,6 +560,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
             legend: {
                 display: false
             },
+            customCanvasBackgroundColor: {
+                color: 'red',
+            }
         },
         elements: {
             line: {
@@ -500,7 +590,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
                 ticks: {
                     display: false
                 }
-            }
+            },
         },
         plugins: {
             tooltip: {
@@ -508,20 +598,6 @@ const UserCard: React.FC<userData> = (props: userData) => {
             }
         }
     };
-    const [height, setHeight] = useState<number>(0);
-    const divRef1 = useRef<HTMLDivElement | null>(null);
-    useEffect(() => {
-        const resizeHandler = () => {
-            if (divRef1.current) {
-                setHeight(divRef1.current.offsetHeight);
-            }
-        };
-        resizeHandler();
-        window.addEventListener('resize', resizeHandler);
-        return () => {
-            window.removeEventListener('resize', resizeHandler);
-        };
-    }, []);
     return (
         <div className="row mx-5 border">
             <ReactTooltip
@@ -553,69 +629,98 @@ const UserCard: React.FC<userData> = (props: userData) => {
                         [{
                             image: props.data.cover_url,
                             speed: -18
-                        }]}
-                                    style={{width: "100%", height: "100%"}}>
-                        <div className="p-3 h-100 w-100" style={{backdropFilter: "brightness(50%) blur(2px)"}}>
-                            <div className="d-flex flex-row flex-wrap gap-5">
-                                <div className="fs-3"
-                                     data-tooltip-id="reactTooltip"
-                                     data-tooltip-content={`Peak Rank:#${props.data.rank_highest.rank?.toLocaleString()}`}>
-                                    <i className="bi bi-globe2 me-2"></i>#{props.data.statistics.global_rank?.toLocaleString()}
-                                </div>
+                        }]} style={{width: "100%", height: "100%"}}>
+                        <div className="p-3 h-100 w-100 border" style={{backdropFilter: "brightness(50%) blur(2px)"}}>
+                            <div className="d-flex flex-row justify-content-between align-items-center">
                                 <div>
-                                    <div className="fs-3 d-flex flex-row align-items-center">
-                                        <div className="d-flex flex-row align-items-center"
+                                    <div>
+                                        <div className="fs-1 d-flex flex-row align-items-center"
                                              data-tooltip-id="reactTooltip"
-                                             data-tooltip-content={"peak country rank"}>
-                                            <img width="28" className="countryIco me-2" alt="ico"
-                                                 src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>
-                                            #{props.data.statistics.rank.country?.toLocaleString()}
+                                             data-tooltip-content={`Peak Rank:#${props.data.rank_highest.rank?.toLocaleString()}`}>
+                                            <i className="bi bi-globe2 me-2 fs-2"></i>#{props.data.statistics.global_rank?.toLocaleString()}
                                         </div>
-                                        <div className="ms-2 h-100 d-flex align-items-center"
+                                        <div>
+                                            <div className="fs-2 d-flex flex-row align-items-center">
+                                                <div className="d-flex flex-row align-items-center"
+                                                     data-tooltip-id="reactTooltip"
+                                                     data-tooltip-content={`Peak Country Rank: #${
+                                                         props.data.db_rank_history.country_rank.reduce((prev: any, current: any) => {
+                                                             return (prev.rank > current.rank) ? prev : current;
+                                                         }).rank} (started logging in ${firstCountryLog})`}>
+                                                    <img width="32" className="countryIco me-2" alt="ico"
+                                                         src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>
+                                                    #{props.data.statistics.rank.country?.toLocaleString()}
+                                                </div>
+                                                <div className="ms-2 h-100 d-flex align-items-center"
+                                                     data-tooltip-id="reactTooltip"
+                                                     data-tooltip-content={props.data.country.name}>
+                                                    <FlagEmoji size={32} code={props.data.country.code}/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div>Performance:</div>
+                                            <div
+                                                className="fs-4 ms-3">{Math.round(props.data.statistics.pp)?.toLocaleString()}pp
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div>Accuracy:</div>
+                                            <div className="fs-4 ms-3">
+                                                {props.data.statistics.hit_accuracy.toFixed(2)}%
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div>Medals:</div>
+                                            <div className="fs-5 ms-3">
+                                                {props.data.user_achievements.length}<i
+                                                className="bi bi-award-fill ms-2"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{margin: -100, marginRight: 20, zIndex: 4}} className="position-relative">
+                                    <i className="bi bi-info-circle position-absolute"
+                                       style={{top: 70, right: 30}}
+                                       data-tooltip-id="reactTooltip"
+                                       data-tooltip-content={`This chart uses a subjective formula wich should not be taken as an actual metric`}></i>
+                                    <Radar data={skillsData} options={skillsOptions} height={400} width={400}/>
+                                </div>
+                                <div className="d-flex flex-column gap-3 mt-3">
+                                    <div>
+                                        <div>
+                                            <i className="bi bi-chevron-double-up me-2"></i>Ranked Score:
+                                        </div>
+                                        <div className="fs-5 ms-4"
                                              data-tooltip-id="reactTooltip"
-                                             data-tooltip-content={props.data.country.name}>
-                                            <FlagEmoji size={32} code={props.data.country.code}/>
+                                             data-tooltip-content={`Total Score: ${props.data.statistics.total_score.toLocaleString()}`}>
+                                            {props.data.statistics.ranked_score.toLocaleString()}
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="d-flex flex-row gap-3 mt-3">
-                                <div>
-                                    <div><i className="bi bi-coin me-2"></i>Performance:</div>
-                                    <div className="fs-5 ms-4">{Math.round(props.data.statistics.pp)?.toLocaleString()}pp
-                                    </div>
-                                </div>
-                                <div>
                                     <div>
-                                        <i className="bi bi-chevron-double-up me-2"></i>Ranked Score:
+                                        <div>
+                                            <i className="bi bi-1-circle me-2"></i>Max Combo:
+                                        </div>
+                                        <div className="fs-5 ms-4">{props.data.statistics.maximum_combo}x</div>
                                     </div>
-                                    <div className="fs-5 ms-4"
-                                         data-tooltip-id="reactTooltip"
-                                         data-tooltip-content={`Score: ${props.data.statistics.total_score.toLocaleString()}`}>
-                                        {props.data.statistics.ranked_score.toLocaleString()}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="d-flex flex-row gap-3 mt-3">
-                                <div>
-                                    <div><i className="bi bi-award-fill me-2"></i>Medals:</div>
-                                    <div className="fs-5 ms-4">{props.data.user_achievements.length}
-                                    </div>
-                                </div>
-                                <div>
                                     <div>
-                                        <i className="bi bi-1-circle me-2"></i>Max Combo:
+                                        <div>
+                                            <i className="bi bi-clock me-2"></i>Play Time:
+                                        </div>
+                                        <div className="fs-5 ms-4"
+                                             style={{width: "min-content"}}
+                                             data-tooltip-id="reactTooltip"
+                                             data-tooltip-content={playtime}>
+                                            {Math.round(props.data.statistics.play_time / 60 / 60)}h
+                                        </div>
                                     </div>
-                                    <div className="fs-5 ms-4">{props.data.statistics.maximum_combo}x</div>
-                                </div>
-                                <div>
                                     <div>
-                                        <i className="bi bi-clock me-2"></i>Play Time:
-                                    </div>
-                                    <div className="fs-5 ms-4"
-                                         data-tooltip-id="reactTooltip"
-                                         data-tooltip-content={playtime}>
-                                        {Math.round(props.data.statistics.play_time / 60 / 60)}h
+                                        <div>
+                                            <i className="bi bi-arrow-counterclockwise me-2"></i>Play Count:
+                                        </div>
+                                        <div className="fs-5 ms-4">
+                                            {props.data.statistics.play_count?.toLocaleString()}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -623,7 +728,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
                     </ParallaxBanner>
                 </div>
             </div>
-            <div className="midPanel col-12 row border m-0 p-0" ref={divRef1}>
+            <div className="midPanel col-12 row border m-0 p-0">
                 <div className="midPanel col-12 col-sm-8 col-xl-8  m-0 p-0">
                     <div className="level col-12 d-flex flex-row align-items-center gap-3 p-3 border">
                         <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
@@ -636,8 +741,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
                     </div>
                     <div className="d-flex flex-row flex-wrap m-0 p-0">
                         <div className="chart col-12 col-lg-6 row border m-0 justify-content-center p-2">
-                            <span
-                                className="text-center my-2">Overall Accuracy: {props.data.statistics.hit_accuracy.toFixed(2)}%</span>
+                            <div className="text-center my-2 fs-5">
+                                Hit Ratios:
+                            </div>
                             <div className="mt-2" style={{height: 200, width: 200}}>
                                 <Doughnut data={hitData}/>
                             </div>
@@ -677,8 +783,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
                             </ul>
                         </div>
                         <div className="chart col-12 col-lg-6 row border m-0 justify-content-center p-2">
-                            <span
-                                className="text-center my-2">Total Play Count: {props.data.statistics.play_count?.toLocaleString()}</span>
+                            <div className="text-center my-2 fs-5">
+                                Rank Ratios:
+                            </div>
                             <div className="" style={{height: 200, width: 200}}>
                                 <Doughnut data={rankData}/>
                             </div>
@@ -710,53 +817,110 @@ const UserCard: React.FC<userData> = (props: userData) => {
                             </ul>
                         </div>
                         <div
-                            className="chart col-12 col-lg-6 m-0 d-flex flex-column justify-content-center align-items-center p-3">
-                            <div className="text-center fst-italic">"""" Skill Set """"</div>
-                            <div style={{marginTop: -40, marginBottom: -50}}>
-                                <Radar data={skillsData} options={skillsOptions}/>
+                            className="col-12 border m-0 d-flex flex-column justify-content-center align-items-center p-3">
+                            <div className="text-center fst-italic">
+                                Top {userScores.best.items.length} plays
                             </div>
-                        </div>
-                        <div
-                            className="col-12 col-lg-6 border m-0 d-flex flex-column justify-content-center align-items-center p-3">
-                            <div className="text-center fst-italic">Top {userScores.length} plays</div>
                             <div className="w-100 flex-grow-1">
                                 <Bar data={ppData} options={ppDataOptions}/>
                             </div>
                         </div>
-                        <div className="rank col-12 d-flex flex-column p-3 border m-0">
-                            <h6>Global Rank Graph:</h6>
+                        <div className="rank col-6 d-flex flex-column p-3 border m-0">
+                            <div className="d-flex flex-row justify-content-between">
+                                <h6>Global Rank History:</h6>
+                                <i className="bi bi-info-circle"
+                                   data-tooltip-id="reactTooltip"
+                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                            </div>
                             <Line data={rankHistoryData} options={historyChartOptions}/>
                         </div>
-                        <div className="rank col-12 d-flex flex-column p-3 border m-0">
-                            <h6>Country Rank Graph:</h6>
+                        <div className="rank col-6 d-flex flex-column p-3 border m-0">
+                            <div className="d-flex flex-row justify-content-between">
+                                <h6>Country Rank History:</h6>
+                                <i className="bi bi-info-circle"
+                                   data-tooltip-id="reactTooltip"
+                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                            </div>
                             <Line data={countryRankHistoryData} options={historyChartOptions}/>
                         </div>
                         <div className="play col-12 d-flex flex-column p-3 border m-0">
-                            <h6>Plays Graph:</h6>
+                            <div className="d-flex flex-row justify-content-between">
+                                <h6>Plays History:</h6>
+                                <i className="bi bi-info-circle"
+                                   data-tooltip-id="reactTooltip"
+                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                            </div>
                             <Line data={playsHistoryData} options={playsHistoryOptions}/>
                         </div>
                     </div>
                 </div>
-                <div className="rightPanel col-12 col-xl-4 border m-0 p-0 d-flex flex-column"
-                     style={{overflowY: "scroll", height: 2250}}>
+                <div className="rightPanel col-12 col-xl-4 border m-0 p-0 d-flex flex-column">
                     <div className="p-3 m-0 border d-flex flex-row align-items-center justify-content-between">
-                        <h6 className="m-0 p-0">Top {userScores.length} plays:</h6>
+                        <h6 className="m-0 p-0">{searchingScores ? '' : (`${scoresTitle}: [${activeScores.length}]`)}</h6>
                         <div>
-                            <button className="text-light"
-                                    style={{backgroundColor: "#00000000", border: "none"}}
-                                    onClick={() => getNewScores('best').then(() => console.log(userScores))}>
-                                <i className="bi bi-bar-chart-line"></i></button>
-                            <button className="text-light"
-                                    style={{backgroundColor: "#00000000", border: "none"}}
-                                    onClick={() => getNewScores('firsts').then(() => console.log(userScores))}>
-                                <i className="bi bi-star"></i></button>
+                            <div className="btn-group" role="group">
+                                <button className="btn btn-outline-light"
+                                        data-tooltip-id={"reactTooltip"}
+                                        data-tooltip-content={"Pinned Scores"}
+                                        disabled={activeScores == userScores.pinned.items}
+                                        onClick={() => {
+                                            setSearchingScores(true);
+                                            setScoresTitle(scoresTitles.pinned);
+                                            setSearchingScores(false);
+                                            setActiveScores(userScores.pinned.items);
+                                        }}>
+                                    <i className="bi bi-pin-angle"></i>
+                                </button>
+                                <button className="btn btn-outline-light"
+                                        data-tooltip-id={"reactTooltip"}
+                                        data-tooltip-content={"First Place Scores"}
+                                        disabled={activeScores == userScores.firsts.items}
+                                        onClick={() => {
+                                            setSearchingScores(true);
+                                            setScoresTitle(scoresTitles.first);
+                                            setSearchingScores(false);
+                                            setActiveScores(userScores.firsts.items);
+                                        }}>
+                                    <i className="bi bi-star"></i>
+                                </button>
+                                <button className="btn btn-outline-light"
+                                        data-tooltip-id={"reactTooltip"}
+                                        data-tooltip-content={"Best Scores"}
+                                        disabled={activeScores == userScores.best.items}
+                                        onClick={() => {
+                                            setSearchingScores(true);
+                                            setScoresTitle(scoresTitles.best);
+                                            setSearchingScores(false);
+                                            setActiveScores(userScores.best.items);
+                                        }}>
+                                    <i className="bi bi-bar-chart-line"></i>
+                                </button>
+                                <button className="btn btn-outline-light"
+                                        data-tooltip-id={"reactTooltip"}
+                                        data-tooltip-content={"Recent Scores"}
+                                        disabled={activeScores == userScores.recent.items}
+                                        onClick={() => {
+                                            setSearchingScores(true);
+                                            setScoresTitle(scoresTitles.recent);
+                                            setSearchingScores(false);
+                                            setActiveScores(userScores.recent.items);
+                                        }}>
+                                    <i className="bi bi-clock-history"></i>
+                                </button>
+                            </div>
                         </div>
-
                     </div>
-                    <div className="border d-flex flex-column m-0 p-0">
-                        {userScores.map((score, index) => (
-                            <Score data={score} colors={colors} num={index}></Score>
-                        ))}
+                    <div className="border d-flex flex-column m-0 p-0"
+                         style={{overflowY: "scroll", height: 2250}}>
+                        {searchingScores ? <div className="spinner-border mx-auto mt-5" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div> :
+                            <>{activeScores.map((score: any, index: number) => (
+                                <div key={index}>
+                                    <Score data={score} colors={colors} num={index}></Score>
+                                </div>
+                            ))}</>}
+
                     </div>
                 </div>
             </div>

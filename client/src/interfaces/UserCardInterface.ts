@@ -246,5 +246,3 @@ export interface Weight {
     percentage: number;
     pp: number;
 }
-
-

@@ -61,6 +61,7 @@ async function updateUser(userId, username, userRanks, countryRank) {
         date.setDate(date.getDate() - (userRanks.length - 1 - index));
         return {rank: number, date};
     });
+
     const currentCountryRank = {
         date: currentDate,
         rank: countryRank
@@ -69,9 +70,10 @@ async function updateUser(userId, username, userRanks, countryRank) {
         let response = {};
         if (await User.exists({userId: userId})) {
             const user = await User.findOne({userId: userId});
-            console.log(user);
             pushOrReplaceObjects(user.rankHistory, objectRanks);
             pushOrReplaceObjects(user.countryRankHistory, [currentCountryRank]);
+            user.rankHistory.sort((a, b) => a.date - b.date);
+            user.countryRankHistory.sort((a, b) => a.date - b.date);
             await user.save();
             response.global_rank = user.rankHistory;
             response.country_rank = user.countryRankHistory;
@@ -220,41 +222,45 @@ app.get('/beatmapInfo/:beatmapId/:userId', async function (req, res) {
     }
 });
 
-app.get('/usrScores/:userId/:type', async function (req, res) {
+app.get('/usrScores/:userId/:thing', async function (req, res) {
     let userId = req.params.userId;
-    let type = req.params.type;
+    let thing = req.params.thing;
     try {
         const token = await getToken();
+        let offset = 0;
+        let response = [];
+        let data = [];
         try {
-            const url = new URL(`https://osu.ppy.sh/api/v2/users/${userId}/scores/${type}`);
-            const params = {
-                include_fails: "1",
-                mode: "osu",
-                "limit": "9999999999999999999999999999999999999999",
-            };
-            Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
-            const headers = {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-                Authorization: `Bearer ${token}`,
-            };
-            const response = await fetch(url, {
-                method: "GET",
-                headers,
-            });
-            const data = await response.json();
-            res.send(data);
-            console.log(data)
+            offset = 0;
+            do {
+                const url = new URL(
+                    `https://osu.ppy.sh/users/${userId}/scores/${thing}?mode=osu&limit=100&offset=${offset}`
+                );
+                const params = {};
+                Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
+                const headers = {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                };
+                const fetchResponse = await fetch(url, {
+                    method: "GET",
+                    headers,
+                });
+                data = await fetchResponse.json();
+                offset += data.length;
+                response = response.concat(data);
+            } while (data.length === 100);
+            res.send(response);
         } catch (error) {
             console.error(error);
-            res.send({error: error.toString()});
+            res.send({ error: error.toString() });
         }
     } catch (error) {
         console.error(error);
-        res.status(500).send({error: "Error fetching data"});
+        res.status(500).send({ error: "Error fetching data" });
     }
 });
-
 app.get('/rankInfo/', async function (req, res) {
     try {
         const token = await getToken();
