@@ -1,11 +1,16 @@
-import React, {useState} from "react";
-import Input from "../components/Input";
+import React, {useEffect, useState} from "react";
 import '../interfaces/UserCardInterface'
 import UserCard from "../components/UserCard";
 import {User} from "../interfaces/UserCardInterface";
-import VolumeSlider from "../components/VolumeSlider";
+import {useParams} from "react-router-dom";
 
-const Info = () => {
+interface PropsInterface {
+    volume: number,
+    username: string,
+    mode: string,
+}
+
+const Info = (props: PropsInterface) => {
     const emptyUser: User = {
         account_history: undefined,
         active_tournament_banner: undefined,
@@ -62,28 +67,31 @@ const Info = () => {
     }
     const [userData, setUserData] = useState<User>(emptyUser);
     let searching = false;
-    const getData = async (username: string) => {
+    const {username} = useParams();
+    const getData = async () => {
         setUserData(emptyUser);
         searching = true;
-        const response = await fetch(`http://localhost:5000/usrInfo/${username}/`);
+        const response = await fetch(`http://localhost:5000/usrInfo/${username}/${props.mode}`);
         const newData = await response.json();
         setUserData(newData);
         searching = false;
     };
+    useEffect(() => {
+        getData().then();
+    }, [username, props.mode]);
     return (
-        <main>
-            <Input onSubmit={getData}/>
-            {/*<VolumeSlider/>*/}
-            {searching ?
-                (
-                    <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                ) : (userData.id !== undefined ?
+        <div className="d-flex flex-column justify-content-center align-items-center">
+            <div className="shadow">
+                {searching ?
                     (
-                        <UserCard data={userData}/>
-                    ) : '')}
-        </main>
+                        <div className="spinner-border" role="status">
+                        </div>
+                    ) : (userData.id !== undefined ?
+                        (
+                            <UserCard data={userData} volume={props.volume} mode={props.mode}/>
+                        ) : '')}
+            </div>
+        </div>
     );
 }
 export default Info;

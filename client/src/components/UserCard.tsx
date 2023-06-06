@@ -19,78 +19,115 @@ import {
     Tooltip,
     Filler
 } from 'chart.js'
+import 'chartjs-adapter-date-fns';
 import FlagEmoji from "./FlagEmoji";
 import {Tooltip as ReactTooltip} from 'react-tooltip'
 import {registerables} from 'chart.js';
 import {ParallaxBanner} from "react-scroll-parallax";
 import {ItemsEntity, ItemsEntity1, ItemsEntity2, scoresTypes} from "../interfaces/ScoresInterface";
 import 'chartjs-adapter-moment';
+import {ColorsType} from "../interfaces/ColorsInterface";
 
 Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler, zoomPlugin);
 Chart.register(...registerables);
 
-
 interface userData {
     data: any;
+    volume: number;
+    mode: string;
 }
 
 type Mode = 'x' | 'y' | 'xy';
 type ModeSnap = "x" | "y" | "nearest" | "index" | "dataset" | "point" | undefined;
 type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
 type AxisType = "time" | undefined;
-
+type ModeTime = 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 const scoresTitles = {
     best: 'Best Scores',
-    first: 'First Place Scores',
+    first: 'First Place',
     pinned: 'Pinned Scores',
     recent: 'Recent Scores',
 }
 const UserCard: React.FC<userData> = (props: userData) => {
+    const colors: ColorsType = {
+        ui: {
+            font: '#f5f5f5',
+            background: '#212529'
+        },
+        judgements: {
+            x300: '#35d4fb',
+            x100: '#6cf128',
+            x50: '#fbc435',
+            xMiss: '#fc0606',
+        },
+        ranks: {
+            xh: '#ffffff',
+            x: '#fbc435',
+            sh: '#cccccc',
+            s: '#c89102',
+            a: '#6cf128',
+            b: '#066cf1',
+            c: '#b014dc',
+            d: '#e00414',
+            f: '#aaaaaa'
+        },
+        charts: {
+            lvl: '#fbc435',
+            skills: '#b64757',
+            global: '#fbc435',
+            country: '#fbc435',
+            plays: '#fbc435',
+            topPp: '#35d4fb'
+        }
+    }
     const [activeScores, setActiveScores] = useState<ItemsEntity[] | ItemsEntity1[] | ItemsEntity2[]>([]);
     const [searchingScores, setSearchingScores] = useState<boolean>(true);
     const [scoresTitle, setScoresTitle] = useState<string>(scoresTitles.pinned);
-
-    const [userScores, setUserScores] = useState<scoresTypes>(
-        {
-            best: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0
+    const [userScores, setUserScores] = useState<scoresTypes>({
+        best: {
+            items: [],
+            pagination: {
+                hasMore: false
             },
-            firsts: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0
+            count: 0
+        },
+        firsts: {
+            items: [],
+            pagination: {
+                hasMore: false
             },
-            pinned: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0
+            count: 0
+        },
+        pinned: {
+            items: [],
+            pagination: {
+                hasMore: false
             },
-            recent: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0
-            }
+            count: 0
+        },
+        recent: {
+            items: [],
+            pagination: {
+                hasMore: false
+            },
+            count: 0
         }
-    );
+    });
     const getFirstCountryLog = () => {
-        const today = new Date(props.data.db_rank_history.country_rank[0].date);
+        const today = new Date(props.data.db_rank_history?.country_rank[0]?.date);
         return today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear();
     }
-    const firstCountryLog = getFirstCountryLog();
+    let firstCountryLog;
+    if (props.data.db_rank_history?.country_rank[0]) {
+        firstCountryLog = getFirstCountryLog();
+    } else {
+        const today = new Date()
+        firstCountryLog = today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear();
+    }
 
     async function getScores(thing: string) {
-        const response = await fetch(`http://localhost:5000/usrScores/${props.data.id}/${thing}`);
+        const response = await fetch(`http://localhost:5000/usrScores/${props.data.id}/${thing}/${props.mode}`);
         return await response.json();
     }
 
@@ -134,6 +171,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
         setActiveScores(newScores.pinned.items);
         setScoresTitle(scoresTitles.pinned);
         setSearchingScores(false);
+        console.log(newScores);
     }
     const secondsToDHMS = (seconds: number) => {
         seconds = Number(seconds);
@@ -154,24 +192,9 @@ const UserCard: React.FC<userData> = (props: userData) => {
     const hits_50_percent: number = props.data.statistics.count_50 / hits_total * 100;
     const hits_100_percent: number = props.data.statistics.count_100 / hits_total * 100;
     const hits_300_percent: number = props.data.statistics.count_300 / hits_total * 100;
-    const colors = {
-        x300: '#35d4fb',
-        x100: '#6cf128',
-        x50: '#fbc435',
-        xMiss: '#fc0606',
-        x: '#ffffff',
-        s: '#fbc435',
-        a: '#6cf128',
-        b: '#066cf1',
-        c: '#b014dc',
-        d: '#e00414',
-        f: '#aaaaaa'
-    }
-    Chart.defaults.backgroundColor = colors.x50;
-    Chart.defaults.borderColor = '#ffffff11';
-    Chart.defaults.color = '#ffffff';
-    Chart.defaults.font.family = "IBM Plex Mono";
+    Chart.defaults.font.family = "Torus Pro";
     Chart.defaults.plugins.legend.display = false;
+    Chart.defaults.color = colors.ui.font;
     const ranks_total: number = (props.data.statistics.grade_counts.ssh + props.data.statistics.grade_counts.ss + props.data.statistics.grade_counts.sh + props.data.statistics.grade_counts.s + props.data.statistics.grade_counts.a);
     const ranks_xh_percent: number = props.data.statistics.grade_counts.ssh / ranks_total * 100;
     const ranks_x_percent: number = props.data.statistics.grade_counts.ss / ranks_total * 100;
@@ -183,18 +206,18 @@ const UserCard: React.FC<userData> = (props: userData) => {
         datasets: [
             {
                 data: [props.data.statistics.count_300, props.data.statistics.count_100, props.data.statistics.count_50, props.data.statistics.count_miss],
-                backgroundColor: [colors.x300, colors.x100, colors.x50, colors.xMiss],
-                hoverBackgroundColor: [colors.x300, colors.x100, colors.x50, colors.xMiss],
+                backgroundColor: [colors.judgements.x300, colors.judgements.x100, colors.judgements.x50, colors.judgements.xMiss],
+                hoverBackgroundColor: [colors.judgements.x300 + 'cc', colors.judgements.x100 + 'cc', colors.judgements.x50 + 'cc', colors.judgements.xMiss + 'cc'],
             },
         ],
     };
     const rankData = {
-        labels: ['X', 'S', 'A'],
+        labels: ['XH', 'X', 'SH', 'S', 'A'],
         datasets: [
             {
-                data: [props.data.statistics.grade_counts.ssh + props.data.statistics.grade_counts.ss, props.data.statistics.grade_counts.sh + props.data.statistics.grade_counts.s, props.data.statistics.grade_counts.a],
-                backgroundColor: [colors.x, colors.s, colors.a],
-                hoverBackgroundColor: [colors.x, colors.s, colors.a],
+                data: [props.data.statistics.grade_counts.ssh, props.data.statistics.grade_counts.ss, props.data.statistics.grade_counts.sh, props.data.statistics.grade_counts.s, props.data.statistics.grade_counts.a],
+                backgroundColor: [colors.ranks.xh, colors.ranks.x, colors.ranks.sh, colors.ranks.s, colors.ranks.a],
+                hoverBackgroundColor: [colors.ranks.xh + 'cc', colors.ranks.x + 'cc', colors.ranks.sh + 'cc', colors.ranks.s + 'cc', colors.ranks.a + 'cc'],
             },
         ],
     };
@@ -208,28 +231,29 @@ const UserCard: React.FC<userData> = (props: userData) => {
             return obj.rank;
         });
     }
-    const rankHistoryData = {
+    const globalHistoryData = {
         labels: getHistoryDates(props.data.db_rank_history.global_rank),
         datasets: [{
             label: 'Rank',
             data: getHistoryValues(props.data.db_rank_history.global_rank),
             fill: false,
-            borderColor: colors.x50,
+            borderColor: colors.charts.global,
             tension: 0.1
         }]
     };
-    const countryRankHistoryData = {
+    const countryHistoryData = {
         labels: getHistoryDates(props.data.db_rank_history.country_rank),
         datasets: [{
             label: 'Rank',
             data: getHistoryValues(props.data.db_rank_history.country_rank),
             fill: false,
-            borderColor: colors.x50,
+            borderColor: colors.charts.country,
             tension: 0.1
         }]
     };
     const today = new Date();
-    const daysAgo = new Date(new Date().setDate(today.getDate() - 90)).setHours(0, 0, 0);
+    const daysAgoGlobal = new Date(new Date().setDate(today.getDate() - 90)).setHours(0, 0, 0);
+    const daysAgoCountry = new Date(new Date().setDate(today.getDate() - 20)).setHours(0, 0, 0);
     const historyChartOptions = {
         responsive: true,
         scales: {
@@ -243,7 +267,12 @@ const UserCard: React.FC<userData> = (props: userData) => {
             },
             x: {
                 type: 'time' as AxisType,
-                min: daysAgo,
+                min: daysAgoGlobal,
+                time: {
+                    displayFormats: {
+                        day: 'DD/MM/YY',
+                    },
+                },
             }
         },
         elements: {
@@ -287,17 +316,13 @@ const UserCard: React.FC<userData> = (props: userData) => {
     };
     const playsHistoryData = {
         labels: props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => {
-            const date = new Date(obj.start_date);
-            const day = date.getDate().toString().padStart(2, "0");
-            const month = (date.getMonth() + 1).toString().padStart(2, "0");
-            const year = date.getFullYear().toString().slice(2);
-            return `${day}/${month}/${year}`;
+            return new Date(obj.start_date);
         }),
         datasets: [{
             label: 'Play Count',
             data: props.data.monthly_playcounts.map((obj: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity) => obj.count),
             fill: false,
-            borderColor: colors.x50,
+            borderColor: colors.charts.plays,
             tension: 0.1
         }]
     };
@@ -305,12 +330,21 @@ const UserCard: React.FC<userData> = (props: userData) => {
         responsive: true,
         scales: {
             y: {
+                reverse: false,
                 ticks: {
                     min: 0,
                     beginAtZero: true,
                     stepSize: 1
                 }
             },
+            x: {
+                type: 'time' as AxisType,
+                time: {
+                    displayFormats: {
+                        day: 'MM/YY',
+                    },
+                },
+            }
         },
         elements: {
             point: {
@@ -328,22 +362,27 @@ const UserCard: React.FC<userData> = (props: userData) => {
                 zoom: {
                     wheel: {
                         enabled: true,
-                        modifierKey: 'ctrl' as ModeModifier
+                        modifierKey: 'alt' as ModeModifier
                     },
                     pinch: {
-                        enabled: true
+                        enabled: true,
+                        modifierKey: 'alt' as ModeModifier
                     },
                     mode: 'x' as Mode
                 },
                 pan: {
                     enabled: true,
-                    mode: 'x' as Mode
-                }
+                    mode: 'x' as Mode,
+                    modifierKey: 'alt' as ModeModifier
+                },
+                rangeMin: {
+                    x: 1,
+                    y: 1
+                },
             }
         },
         pointHitRadius: 10,
         pointHoverRadius: 4,
-
     };
     let aimScore = 0;
     let speedScore = 0;
@@ -523,7 +562,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
     }
     useEffect(() => {
         getNewScores().then()
-    }, []);
+    }, [props.mode, props.data.id]);
     calculateScores();
     const skillsData = {
         labels: [
@@ -574,7 +613,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
         labels: allPPs.map(() => ''),
         datasets: [{
             label: 'PP',
-            data: allPPs.reverse(),
+            data: allPPs,
         }],
     };
     const ppDataOptions = {
@@ -583,7 +622,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
         maintainAspectRatio: false,
         scales: {
             y: {
-                beginAtZero: false
+                beginAtZero: false,
+                min: allPPs.reverse()[0] - Math.round(allPPs.reverse()[0] * 0.1)
             },
             x: {
                 beginAtZero: false,
@@ -599,270 +639,313 @@ const UserCard: React.FC<userData> = (props: userData) => {
         }
     };
     return (
-        <div className="row mx-5 border">
-            <ReactTooltip
-                id="reactTooltip"
-                style={{zIndex: 3}}
-            />
-            <div className="topPanel m-0 p-0 d-flex flex-row" style={{overflow: "hidden", position: "relative"}}>
-                <div>
-                    <div className="ratio ratio-1x1 border"
-                         style={{
-                             backgroundImage: `url(${props.data.avatar_url})`,
-                             backgroundPosition: "center",
-                             backgroundSize: "cover",
-                             height: 250,
-                             width: 250
-                         }}>
-                    </div>
-                    <div className="w-100 p-3 border">
-                        <a data-tooltip-id={props.data.previous_usernames.length > 0 ? "reactTooltip" : ""}
-                           data-tooltip-content={`A.K.A: ${JSON.stringify(props.data.previous_usernames).substring(1, JSON.stringify(props.data.previous_usernames).length - 1).replace(/"/g, '')}`}
-                           className="d-block text-center fs-4 mb-2 text-align-center text-decoration-none text-light"
-                           href={`https://osu.ppy.sh/users/${props.data.id}`} target="_blank">
-                            {props.data.username}
-                        </a>
-                    </div>
-                </div>
-                <div className="flex-grow-1">
-                    <ParallaxBanner layers={
-                        [{
-                            image: props.data.cover_url,
-                            speed: -18
-                        }]} style={{width: "100%", height: "100%"}}>
-                        <div className="p-3 h-100 w-100 border" style={{backdropFilter: "brightness(50%) blur(2px)"}}>
-                            <div className="d-flex flex-row justify-content-between align-items-center">
+        <div className="row m-0" style={{
+            maxWidth: 1200,
+            backgroundColor: colors.ui.background,
+            color: colors.ui.font
+        }}>
+            <ReactTooltip id="reactTooltip" style={{zIndex: 10}}/>
+            <div className="topPanel m-0 p-0 col-12" style={{overflow: "hidden", position: "relative"}}>
+                <ParallaxBanner layers={
+                    [{
+                        image: props.data.cover_url,
+                        speed: -18
+                    }]} style={{width: "100%", height: "100%"}}>
+                    <div className="h-100 w-100" style={{backdropFilter: "brightness(40%) blur(4px)"}}>
+                        <div className="d-flex flex-row justify-content-start">
+                            <div className="p-3">
+                                <div className="ratio ratio-1x1 rounded-5"
+                                     style={{
+                                         backgroundImage: `url(${props.data.avatar_url})`,
+                                         backgroundPosition: "center",
+                                         backgroundSize: "cover",
+                                         height: 200,
+                                         width: 200
+                                     }}>
+                                </div>
+                                <div className="mt-2">
+                                    <a data-tooltip-id={props.data.previous_usernames.length > 0 ? "reactTooltip" : ""}
+                                       data-tooltip-content={`A.K.A: ${JSON.stringify(props.data.previous_usernames).substring(1, JSON.stringify(props.data.previous_usernames).length - 1).replace(/"/g, '')}`}
+                                       className="d-block text-center fs-3 mb-2 text-align-center text-decoration-none text-light"
+                                       href={`https://osu.ppy.sh/users/${props.data.id}`} target="_blank"
+                                       rel="noreferrer">
+                                        {props.data.username}
+                                    </a>
+                                </div>
+                                <div className="level d-flex flex-row align-items-center gap-3">
+                                    <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
+                                    <div className="flex-grow-1 overflow-hidden bg-black rounded-pill"
+                                         style={{height: 5}}>
+                                        <div className="bg-warning"
+                                             style={{width: `${props.data.statistics.level.progress}%`, height: 5}}>
+                                        </div>
+                                    </div>
+                                    <h6 className="p-0 m-0">{props.data.statistics.level.progress}%</h6>
+                                </div>
+                            </div>
+                            <div className="p-3">
+                                <div className="fs-1 d-flex flex-row align-items-center"
+                                     data-tooltip-id="reactTooltip"
+                                     data-tooltip-content={`Peak Rank:#${props.data.rank_highest.rank?.toLocaleString()}`}>
+                                    <i className="bi bi-globe2 me-2 fs-2"></i>#{props.data.statistics.global_rank?.toLocaleString()}
+                                </div>
+                                <div>
+                                    <div className="fs-2 d-flex flex-row align-items-center">
+                                        <div className="d-flex flex-row align-items-center"
+                                             data-tooltip-id="reactTooltip"
+                                             data-tooltip-content={`Peak Country Rank: #${
+                                                 props.data.db_rank_history.country_rank.reduce((prev: any, current: any) => {
+                                                     return (prev.rank > current.rank) ? prev : current;
+                                                 }).rank} (started logging in ${firstCountryLog})`}>
+                                            <img width="32" className="countryIco me-2" alt="ico"
+                                                 src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>
+                                            #{props.data.statistics.rank.country?.toLocaleString()}
+                                        </div>
+                                        <div className="ms-2 h-100 d-flex align-items-center"
+                                             data-tooltip-id="reactTooltip"
+                                             data-tooltip-content={props.data.country.name}>
+                                            <FlagEmoji size={32} code={props.data.country.code}/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>Performance:</div>
+                                    <div
+                                        className="fs-4">{Math.round(props.data.statistics.pp)?.toLocaleString()}pp
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>Accuracy:</div>
+                                    <div className="fs-4">
+                                        {props.data.statistics.hit_accuracy.toFixed(2)}%
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>Medals:</div>
+                                    <div className="fs-5">
+                                        {props.data.user_achievements.length}<i
+                                        className="bi bi-award-fill ms-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{marginTop: -100, marginBottom: -100, zIndex: 4}}
+                                 className="position-relative mx-auto d-flex align-items-center">
+                                <i className="bi bi-info-circle position-absolute"
+                                   style={{top: 120, right: 30}}
+                                   data-tooltip-id="reactTooltip"
+                                   data-tooltip-content={`This chart uses a subjective formula which should not be taken as an actual metric`}></i>
+                                <Radar data={skillsData} options={skillsOptions} height={400} width={400}/>
+                            </div>
+                            <div className="p-3 d-flex flex-column gap-3">
                                 <div>
                                     <div>
-                                        <div className="fs-1 d-flex flex-row align-items-center"
-                                             data-tooltip-id="reactTooltip"
-                                             data-tooltip-content={`Peak Rank:#${props.data.rank_highest.rank?.toLocaleString()}`}>
-                                            <i className="bi bi-globe2 me-2 fs-2"></i>#{props.data.statistics.global_rank?.toLocaleString()}
-                                        </div>
-                                        <div>
-                                            <div className="fs-2 d-flex flex-row align-items-center">
-                                                <div className="d-flex flex-row align-items-center"
-                                                     data-tooltip-id="reactTooltip"
-                                                     data-tooltip-content={`Peak Country Rank: #${
-                                                         props.data.db_rank_history.country_rank.reduce((prev: any, current: any) => {
-                                                             return (prev.rank > current.rank) ? prev : current;
-                                                         }).rank} (started logging in ${firstCountryLog})`}>
-                                                    <img width="32" className="countryIco me-2" alt="ico"
-                                                         src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>
-                                                    #{props.data.statistics.rank.country?.toLocaleString()}
-                                                </div>
-                                                <div className="ms-2 h-100 d-flex align-items-center"
-                                                     data-tooltip-id="reactTooltip"
-                                                     data-tooltip-content={props.data.country.name}>
-                                                    <FlagEmoji size={32} code={props.data.country.code}/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div>Performance:</div>
-                                            <div
-                                                className="fs-4 ms-3">{Math.round(props.data.statistics.pp)?.toLocaleString()}pp
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div>Accuracy:</div>
-                                            <div className="fs-4 ms-3">
-                                                {props.data.statistics.hit_accuracy.toFixed(2)}%
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div>Medals:</div>
-                                            <div className="fs-5 ms-3">
-                                                {props.data.user_achievements.length}<i
-                                                className="bi bi-award-fill ms-2"></i>
-                                            </div>
-                                        </div>
+                                        <i className="bi bi-chevron-double-up me-2"></i>Ranked Score:
+                                    </div>
+                                    <div className="fs-5 ms-4"
+                                         data-tooltip-id="reactTooltip"
+                                         data-tooltip-content={`Total Score: ${props.data.statistics.total_score.toLocaleString()}`}>
+                                        {props.data.statistics.ranked_score.toLocaleString()}
                                     </div>
                                 </div>
-                                <div style={{margin: -100, marginRight: 20, zIndex: 4}} className="position-relative">
-                                    <i className="bi bi-info-circle position-absolute"
-                                       style={{top: 70, right: 30}}
-                                       data-tooltip-id="reactTooltip"
-                                       data-tooltip-content={`This chart uses a subjective formula wich should not be taken as an actual metric`}></i>
-                                    <Radar data={skillsData} options={skillsOptions} height={400} width={400}/>
+                                <div>
+                                    <div>
+                                        <i className="bi bi-1-circle me-2"></i>Max Combo:
+                                    </div>
+                                    <div className="fs-5 ms-4">{props.data.statistics.maximum_combo}x</div>
                                 </div>
-                                <div className="d-flex flex-column gap-3 mt-3">
+                                <div>
                                     <div>
-                                        <div>
-                                            <i className="bi bi-chevron-double-up me-2"></i>Ranked Score:
-                                        </div>
-                                        <div className="fs-5 ms-4"
-                                             data-tooltip-id="reactTooltip"
-                                             data-tooltip-content={`Total Score: ${props.data.statistics.total_score.toLocaleString()}`}>
-                                            {props.data.statistics.ranked_score.toLocaleString()}
-                                        </div>
+                                        <i className="bi bi-clock me-2"></i>Play Time:
                                     </div>
-                                    <div>
-                                        <div>
-                                            <i className="bi bi-1-circle me-2"></i>Max Combo:
-                                        </div>
-                                        <div className="fs-5 ms-4">{props.data.statistics.maximum_combo}x</div>
+                                    <div className="fs-5 ms-4"
+                                         style={{width: "min-content"}}
+                                         data-tooltip-id="reactTooltip"
+                                         data-tooltip-content={playtime}>
+                                        {Math.round(props.data.statistics.play_time / 60 / 60)}h
                                     </div>
+                                </div>
+                                <div>
                                     <div>
-                                        <div>
-                                            <i className="bi bi-clock me-2"></i>Play Time:
-                                        </div>
-                                        <div className="fs-5 ms-4"
-                                             style={{width: "min-content"}}
-                                             data-tooltip-id="reactTooltip"
-                                             data-tooltip-content={playtime}>
-                                            {Math.round(props.data.statistics.play_time / 60 / 60)}h
-                                        </div>
+                                        <i className="bi bi-arrow-counterclockwise me-2"></i>Play Count:
                                     </div>
-                                    <div>
-                                        <div>
-                                            <i className="bi bi-arrow-counterclockwise me-2"></i>Play Count:
-                                        </div>
-                                        <div className="fs-5 ms-4">
-                                            {props.data.statistics.play_count?.toLocaleString()}
-                                        </div>
+                                    <div className="fs-5 ms-4">
+                                        {props.data.statistics.play_count?.toLocaleString()}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </ParallaxBanner>
+                    </div>
+                </ParallaxBanner>
+            </div>
+            <div className="barPanel m-0 p-0 col-12 shadow p-3 d-flex flex-row flex-wrap gap-3">
+                <div>
+                    <i className="bi bi-people-fill me-2"></i> Followers: {props.data.follower_count}
+                </div>
+                <div>
+                    <i className="bi bi-discord me-2"></i>{props.data.discord}
+                </div>
+                <div>
+                    <i className="bi bi-twitter me-2"></i>{props.data.twitter}
+                </div>
+                <div>
+                    <i className="bi bi-globe2 me-2"></i>{props.data.website}
+                </div>
+                <div>
+                    <i className="bi bi-geo-alt-fill me-2"></i>{props.data.location}
+                </div>
+                <div>
+                    <i className="bi bi-suit-heart-fill me-2"></i>{props.data.interests}
+                </div>
+                <div>
+                    <i className="bi bi-buildings-fill me-2"></i>{props.data.occupation}
                 </div>
             </div>
-            <div className="midPanel col-12 row border m-0 p-0">
-                <div className="midPanel col-12 col-sm-8 col-xl-8  m-0 p-0">
-                    <div className="level col-12 d-flex flex-row align-items-center gap-3 p-3 border">
-                        <h6 className="p-0 m-0">lvl {props.data.statistics.level.current}</h6>
-                        <div className="border flex-grow-1 overflow-hidden" style={{height: 5}}>
-                            <div className="bg-warning"
-                                 style={{width: `${props.data.statistics.level.progress}%`, height: 5}}>
-                            </div>
-                        </div>
-                        <h6 className="p-0 m-0">{props.data.statistics.level.progress}%</h6>
-                    </div>
-                    <div className="d-flex flex-row flex-wrap m-0 p-0">
-                        <div className="chart col-12 col-lg-6 row border m-0 justify-content-center p-2">
-                            <div className="text-center my-2 fs-5">
-                                Hit Ratios:
-                            </div>
-                            <div className="mt-2" style={{height: 200, width: 200}}>
-                                <Doughnut data={hitData}/>
-                            </div>
-                            <ul className="col-12">
-                                <li className="d-flex flex-row align-items-center justify-content-between">
+            <div className="botPanel col-12 row m-0 p-3 justify-content-center" style={{zIndex: 3}}>
+                <div className="midPanel col-12 col-xl-8 m-0">
+                    <div className="d-flex flex-column me-3">
+                        <div className="rounded-5 shadow row mb-3">
+                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
+                                <div>
+                                    Hit Ratios:
+                                </div>
+                                <div className="mt-2" style={{height: 200, width: 200}}>
+                                    <Doughnut data={hitData}/>
+                                </div>
+                                <ul className="col-12">
+                                    <li className="d-flex flex-row align-items-center justify-content-between">
                                 <span className="d-flex flex-row align-items-center gap-1">
                                 <div style={{
-                                    backgroundColor: colors.x300,
+                                    backgroundColor: colors.judgements.x300,
                                     height: 15,
                                     width: 15
                                 }}></div>300: {hits_300_percent.toFixed(2)}%</span><span>{props.data.statistics.count_300?.toLocaleString()}</span>
-                                </li>
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.x100,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>100: {hits_100_percent.toFixed(2)}%</span><span>{props.data.statistics.count_100?.toLocaleString()}</span>
-                                </li>
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.x50,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>50:&nbsp; {hits_50_percent.toFixed(2)}%</span><span>{props.data.statistics.count_50?.toLocaleString()}</span>
-                                </li>
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.xMiss,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>0:&nbsp;&nbsp; {hits_miss_percent.toFixed(2)}%</span><span>{props.data.statistics.count_miss?.toLocaleString()}</span>
-                                </li>
-                            </ul>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.judgements.x100,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>100: {hits_100_percent.toFixed(2)}%</span><span>{props.data.statistics.count_100?.toLocaleString()}</span>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.judgements.x50,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>50: {hits_50_percent.toFixed(2)}%</span><span>{props.data.statistics.count_50?.toLocaleString()}</span>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.judgements.xMiss,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>0: {hits_miss_percent.toFixed(2)}%</span><span>{props.data.statistics.count_miss?.toLocaleString()}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
+                                <div>
+                                    Rank Ratios:
+                                </div>
+                                <div className="" style={{height: 200, width: 200}}>
+                                    <Doughnut data={rankData}/>
+                                </div>
+                                <ul className="col-12">
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.ranks.xh,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>XH: {(ranks_xh_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.ssh.toLocaleString()}</span>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.ranks.x,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>X: {(ranks_x_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.ss.toLocaleString()}</span>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.ranks.sh,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>SH: {(ranks_sh_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.sh.toLocaleString()}</span>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.ranks.s,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>S: {(ranks_s_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.s.toLocaleString()}</span>
+                                    </li>
+                                    <li className="d-flex flex-row align-items-center justify-content-between"><span
+                                        className="d-flex flex-row align-items-center gap-1"><div
+                                        style={{
+                                            backgroundColor: colors.ranks.a,
+                                            height: 15,
+                                            width: 15
+                                        }}></div>A: {(ranks_a_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.a.toLocaleString()}</span>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                        <div className="chart col-12 col-lg-6 row border m-0 justify-content-center p-2">
-                            <div className="text-center my-2 fs-5">
-                                Rank Ratios:
+                        <div className="rounded-5 shadow row mb-3">
+                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
+                                <div className="d-flex flex-row justify-content-between">
+                                    <h6>Global Rank History:</h6>
+                                    <i className="bi bi-info-circle"
+                                       data-tooltip-id="reactTooltip"
+                                       data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                                </div>
+                                <Line data={globalHistoryData} options={historyChartOptions}/>
                             </div>
-                            <div className="" style={{height: 200, width: 200}}>
-                                <Doughnut data={rankData}/>
-                            </div>
-                            <ul className="col-12">
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.x,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>X: {(ranks_x_percent + ranks_xh_percent).toFixed(2)}%</span><span>{(props.data.statistics.grade_counts.ss + props.data.statistics.grade_counts.ssh).toLocaleString()}</span>
-                                </li>
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.s,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>S: {(ranks_s_percent + ranks_sh_percent).toFixed(2)}%</span><span>{(props.data.statistics.grade_counts.s + props.data.statistics.grade_counts.sh).toLocaleString()}</span>
-                                </li>
-                                <li className="d-flex flex-row align-items-center justify-content-between"><span
-                                    className="d-flex flex-row align-items-center gap-1"><div
-                                    style={{
-                                        backgroundColor: colors.a,
-                                        height: 15,
-                                        width: 15
-                                    }}></div>A: {ranks_a_percent.toFixed(2)}%</span><span>{props.data.statistics.grade_counts.a?.toLocaleString()}</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div
-                            className="col-12 border m-0 d-flex flex-column justify-content-center align-items-center p-3">
-                            <div className="text-center fst-italic">
-                                Top {userScores.best.items.length} plays
-                            </div>
-                            <div className="w-100 flex-grow-1">
-                                <Bar data={ppData} options={ppDataOptions}/>
+                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
+                                <div className="d-flex flex-row justify-content-between">
+                                    <h6>Country Rank History:</h6>
+                                    <i className="bi bi-info-circle"
+                                       data-tooltip-id="reactTooltip"
+                                       data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                                </div>
+                                <Line data={countryHistoryData} options={historyChartOptions}/>
                             </div>
                         </div>
-                        <div className="rank col-6 d-flex flex-column p-3 border m-0">
-                            <div className="d-flex flex-row justify-content-between">
-                                <h6>Global Rank History:</h6>
-                                <i className="bi bi-info-circle"
-                                   data-tooltip-id="reactTooltip"
-                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                        <div className="rounded-5 shadow row mb-3">
+                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
+                                <div className="d-flex flex-row justify-content-between">
+                                    <h6>Plays History:</h6>
+                                    <i className="bi bi-info-circle"
+                                       data-tooltip-id="reactTooltip"
+                                       data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                                </div>
+                                <Line data={playsHistoryData} options={playsHistoryOptions}/>
                             </div>
-                            <Line data={rankHistoryData} options={historyChartOptions}/>
-                        </div>
-                        <div className="rank col-6 d-flex flex-column p-3 border m-0">
-                            <div className="d-flex flex-row justify-content-between">
-                                <h6>Country Rank History:</h6>
-                                <i className="bi bi-info-circle"
-                                   data-tooltip-id="reactTooltip"
-                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
+                                <div className="d-flex flex-row justify-content-between">
+                                    <h6>Top {userScores.best.items.length} plays:</h6>
+                                </div>
+                                <div className="w-100 flex-grow-1">
+                                    <Bar data={ppData} options={ppDataOptions}/>
+                                </div>
                             </div>
-                            <Line data={countryRankHistoryData} options={historyChartOptions}/>
-                        </div>
-                        <div className="play col-12 d-flex flex-column p-3 border m-0">
-                            <div className="d-flex flex-row justify-content-between">
-                                <h6>Plays History:</h6>
-                                <i className="bi bi-info-circle"
-                                   data-tooltip-id="reactTooltip"
-                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
-                            </div>
-                            <Line data={playsHistoryData} options={playsHistoryOptions}/>
                         </div>
                     </div>
                 </div>
-                <div className="rightPanel col-12 col-xl-4 border m-0 p-0 d-flex flex-column">
-                    <div className="p-3 m-0 border d-flex flex-row align-items-center justify-content-between">
-                        <h6 className="m-0 p-0">{searchingScores ? '' : (`${scoresTitle}: [${activeScores.length}]`)}</h6>
-                        <div>
-                            <div className="btn-group" role="group">
-                                <button className="btn btn-outline-light"
+                <div className="rigthPanel col-12 col-xl-4 m-0">
+                    <div className="p-3 d-flex flex-column rounded-5 shadow m-0">
+                        <div className="m-0 d-flex flex-row align-items-center justify-content-between">
+                            <div className="rounded-pill overflow-hidden flex-grow-1 d-flex flex-row shadow">
+                                <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"Pinned Scores"}
-                                        disabled={activeScores == userScores.pinned.items}
+                                        disabled={activeScores === userScores.pinned.items}
                                         onClick={() => {
                                             setSearchingScores(true);
                                             setScoresTitle(scoresTitles.pinned);
@@ -871,10 +954,10 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                         }}>
                                     <i className="bi bi-pin-angle"></i>
                                 </button>
-                                <button className="btn btn-outline-light"
+                                <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
-                                        data-tooltip-content={"First Place Scores"}
-                                        disabled={activeScores == userScores.firsts.items}
+                                        data-tooltip-content={"First Place"}
+                                        disabled={activeScores === userScores.firsts.items}
                                         onClick={() => {
                                             setSearchingScores(true);
                                             setScoresTitle(scoresTitles.first);
@@ -883,10 +966,10 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                         }}>
                                     <i className="bi bi-star"></i>
                                 </button>
-                                <button className="btn btn-outline-light"
+                                <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"Best Scores"}
-                                        disabled={activeScores == userScores.best.items}
+                                        disabled={activeScores === userScores.best.items}
                                         onClick={() => {
                                             setSearchingScores(true);
                                             setScoresTitle(scoresTitles.best);
@@ -895,10 +978,10 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                         }}>
                                     <i className="bi bi-bar-chart-line"></i>
                                 </button>
-                                <button className="btn btn-outline-light"
+                                <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"Recent Scores"}
-                                        disabled={activeScores == userScores.recent.items}
+                                        disabled={activeScores === userScores.recent.items}
                                         onClick={() => {
                                             setSearchingScores(true);
                                             setScoresTitle(scoresTitles.recent);
@@ -909,27 +992,22 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                 </button>
                             </div>
                         </div>
-                    </div>
-                    <div className="border d-flex flex-column m-0 p-0"
-                         style={{overflowY: "scroll", height: 2250}}>
-                        {searchingScores ? <div className="spinner-border mx-auto mt-5" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div> :
-                            <>{activeScores.map((score: any, index: number) => (
-                                <div key={index}>
-                                    <Score data={score} colors={colors} num={index}></Score>
-                                </div>
-                            ))}</>}
+                        <div className="d-flex flex-column m-0 pt-2 justify-content-center"
+                             style={{overflowY: "scroll"}}>
+                            {searchingScores ?
+                                <div className="spinner-border mx-auto mt-5" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div> :
+                                <>{activeScores.map((score: any, index: number) => (
+                                    <Score data={score} colors={colors} num={index} volume={props.volume}/>
+                                ))}</>}
 
+                        </div>
                     </div>
                 </div>
             </div>
-            {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/
-            }
-            {/*     style={{backgroundColor: '#2a2226'}}>*/
-            }
-            {/*</div>*/
-            }
+            {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/}
+            {/*     style={{backgroundColor: '#2a2226'}}></div>*/}
         </div>
     );
 }

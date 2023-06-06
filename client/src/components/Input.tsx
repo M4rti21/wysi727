@@ -1,6 +1,8 @@
 import React, {useState} from "react";
+import {useNavigate} from 'react-router-dom';
 
-const Input = (props: any) => {
+const Input = () => {
+    const navigate = useNavigate();
     const [data, setData] = useState('');
     const handleChange = (e: any) => {
         e.preventDefault();
@@ -8,18 +10,25 @@ const Input = (props: any) => {
     }
     const handleSubmit = (e: any) => {
         e.preventDefault();
-        props.onSubmit(data);
+        console.log("this works")
+        navigate(`/users/${data}`);
+        setData('');
     }
     return (
-        <>
-            <form className="input-group p-3 justify-content-center" onSubmit={handleSubmit}>
-                <span className="input-group-text">Username</span>
-                <input type="text" className="form-control" placeholder="Username" value={data}
-                       onChange={handleChange}/>
-                <button className="btn btn-primary"><i className="bi bi-search"></i></button>
-            </form>
-
-        </>
+        <form className="flex-grow-1 d-flex flex-row gap-2 align-items-center justify-content-between p-0 m-0"
+              onSubmit={handleSubmit}>
+            <input type="text"
+                   className="text-light flex-grow-1 me-auto"
+                   style={{
+                       outline: 0,
+                       borderWidth: "0 0 1px",
+                       backgroundColor: "#00000000",
+                       borderColor: "#ffffff",
+                   }}
+                   placeholder="Your Username" value={data}
+                   onChange={handleChange}/>
+            <button className="btn btn-dark ms-auto"><i className="bi bi-search"></i></button>
+        </form>
     );
 }
 export default Input;

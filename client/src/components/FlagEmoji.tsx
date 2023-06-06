@@ -16,10 +16,9 @@ const FlagEmoji = (props: propsInterface) => {
             });
         return countryCodeChars.join('-');
     }
-
     const emojiUnicode = countryCodeToEmoji(props.code);
     return (
-        <img height={props.size} src={require(`../assets/flags/${emojiUnicode}.svg`)} alt="flag"/>
+        <img height={props.size} src={require(`../assets/flags/${emojiUnicode}.svg`)} alt="flag" className=""/>
     );
 }
 export default FlagEmoji;

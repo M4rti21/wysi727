@@ -53,7 +53,7 @@ function pushOrReplaceObjects(existingArray, newArray) {
     });
 }
 
-async function updateUser(userId, username, userRanks, countryRank) {
+async function updateUser(userId, username, userRanks, countryRank, mode) {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
     const objectRanks = userRanks.map((number, index) => {
@@ -61,7 +61,6 @@ async function updateUser(userId, username, userRanks, countryRank) {
         date.setDate(date.getDate() - (userRanks.length - 1 - index));
         return {rank: number, date};
     });
-
     const currentCountryRank = {
         date: currentDate,
         rank: countryRank
@@ -70,25 +69,112 @@ async function updateUser(userId, username, userRanks, countryRank) {
         let response = {};
         if (await User.exists({userId: userId})) {
             const user = await User.findOne({userId: userId});
-            pushOrReplaceObjects(user.rankHistory, objectRanks);
-            pushOrReplaceObjects(user.countryRankHistory, [currentCountryRank]);
-            user.rankHistory.sort((a, b) => a.date - b.date);
-            user.countryRankHistory.sort((a, b) => a.date - b.date);
+            switch (mode) {
+                case 'osu':
+                    pushOrReplaceObjects(user.modes.osu.rankHistory, objectRanks);
+                    pushOrReplaceObjects(user.modes.osu.countryRankHistory, [currentCountryRank]);
+                    user.modes.osu.rankHistory.sort((a, b) => a.date - b.date);
+                    user.modes.osu.countryRankHistory.sort((a, b) => a.date - b.date);
+                    response.global_rank = user.modes.osu.rankHistory;
+                    response.country_rank = user.modes.osu.countryRankHistory;
+                    break;
+                case 'taiko':
+                    pushOrReplaceObjects(user.modes.taiko.rankHistory, objectRanks);
+                    pushOrReplaceObjects(user.modes.taiko.countryRankHistory, [currentCountryRank]);
+                    user.modes.taiko.rankHistory.sort((a, b) => a.date - b.date);
+                    user.modes.taiko.countryRankHistory.sort((a, b) => a.date - b.date);
+                    response.global_rank = user.modes.taiko.rankHistory;
+                    response.country_rank = user.modes.taiko.countryRankHistory;
+                    break;
+                case 'fruits':
+                    pushOrReplaceObjects(user.modes.fruits.rankHistory, objectRanks);
+                    pushOrReplaceObjects(user.modes.fruits.countryRankHistory, [currentCountryRank]);
+                    user.modes.fruits.rankHistory.sort((a, b) => a.date - b.date);
+                    user.modes.fruits.countryRankHistory.sort((a, b) => a.date - b.date);
+                    response.global_rank = user.modes.fruits.rankHistory;
+                    response.country_rank = user.modes.fruits.countryRankHistory;
+                    break;
+                case 'mania':
+                    pushOrReplaceObjects(user.modes.mania.rankHistory, objectRanks);
+                    pushOrReplaceObjects(user.modes.mania.countryRankHistory, [currentCountryRank]);
+                    user.modes.mania.rankHistory.sort((a, b) => a.date - b.date);
+                    user.modes.mania.countryRankHistory.sort((a, b) => a.date - b.date);
+                    response.global_rank = user.modes.mania.rankHistory;
+                    response.country_rank = user.modes.mania.countryRankHistory;
+                    break;
+            }
             await user.save();
-            response.global_rank = user.rankHistory;
-            response.country_rank = user.countryRankHistory;
         } else {
-            const user = new User(
-                {
-                    userId: userId,
-                    username: username,
-                    rankHistory: objectRanks,
-                    countryRankHistory: [currentCountryRank]
-                }
-            )
-            await user.save();
-            response.global_rank = user.rankHistory;
-            response.country_rank = user.countryRankHistory;
+            switch (mode) {
+                case 'osu':
+                    const userOsu = new User(
+                        {
+                            userId: userId,
+                            username: username,
+                            modes: {
+                                osu: {
+                                    rankHistory: objectRanks,
+                                    countryRankHistory: [currentCountryRank]
+                                }
+                            }
+                        }
+                    )
+                    await userOsu.save();
+                    response.global_rank = userOsu.modes.osu.rankHistory;
+                    response.country_rank = userOsu.modes.osu.countryRankHistory;
+                    break;
+                case 'taiko':
+                    const userTaiko = new User(
+                        {
+                            userId: userId,
+                            username: username,
+                            modes: {
+                                taiko: {
+                                    rankHistory: objectRanks,
+                                    countryRankHistory: [currentCountryRank]
+                                }
+                            }
+                        }
+                    )
+                    await userTaiko.save();
+                    response.global_rank = userTaiko.modes.taiko.rankHistory;
+                    response.country_rank = userTaiko.modes.taiko.countryRankHistory;
+                    break;
+                case 'fruits':
+                    const userFruits = new User(
+                        {
+                            userId: userId,
+                            username: username,
+                            modes: {
+                                fruits: {
+                                    rankHistory: objectRanks,
+                                    countryRankHistory: [currentCountryRank]
+                                }
+                            }
+                        }
+                    )
+                    await userFruits.save();
+                    response.global_rank = userFruits.modes.fruits.rankHistory;
+                    response.country_rank = userFruits.modes.fruits.countryRankHistory;
+                    break;
+                case 'mania':
+                    const userMania = new User(
+                        {
+                            userId: userId,
+                            username: username,
+                            modes: {
+                                mania: {
+                                    rankHistory: objectRanks,
+                                    countryRankHistory: [currentCountryRank]
+                                }
+                            }
+                        }
+                    )
+                    await userMania.save();
+                    response.global_rank = userMania.modes.mania.rankHistory;
+                    response.country_rank = userMania.modes.mania.countryRankHistory;
+                    break;
+            }
         }
         return response;
     } catch (e) {
@@ -163,13 +249,14 @@ function writeNewToken(token, currentUnixTime) {
     }
 }
 
-app.get('/usrInfo/:username/', async function (req, res) {
+app.get('/usrInfo/:username/:mode', async function (req, res) {
     let username = req.params.username;
+    let mode = req.params.mode;
     try {
         const token = await getToken();
         try {
             const url = new URL(
-                `https://osu.ppy.sh/api/v2/users/${username}/osu`
+                `https://osu.ppy.sh/api/v2/users/${username}/${mode}`
             );
             const headers = {
                 "Content-Type": "application/json",
@@ -181,17 +268,18 @@ app.get('/usrInfo/:username/', async function (req, res) {
                 headers,
             });
             const data = await response.json();
-            data.db_rank_history = await updateUser(data.id, data.username, data.rank_history.data, data.statistics.country_rank);
+            data.db_rank_history = await updateUser(data.id, data.username, data.rank_history.data, data.statistics.country_rank, mode);
             res.send(data);
         } catch (error) {
             res.send({error: error.toString()});
+            console.log(error.toString())
         }
     } catch (error) {
         res.status(500).send({error: 'Error fetching data'})
     }
 });
 
-app.get('/beatmapInfo/:beatmapId/:userId', async function (req, res) {
+app.get('/beatmapInfo/:beatmapId/:userId/', async function (req, res) {
     let beatmapId = req.params.beatmapId;
     let userId = req.params.userId;
     try {
@@ -222,9 +310,11 @@ app.get('/beatmapInfo/:beatmapId/:userId', async function (req, res) {
     }
 });
 
-app.get('/usrScores/:userId/:thing', async function (req, res) {
-    let userId = req.params.userId;
-    let thing = req.params.thing;
+app.get('/usrScores/:userId/:thing/:mode', async function (req, res) {
+    let userId = req.params['userId'];
+    let thing = req.params['thing'];
+    let mode = req.params['mode'];
+    console.log(userId, thing, mode)
     try {
         const token = await getToken();
         let offset = 0;
@@ -234,7 +324,7 @@ app.get('/usrScores/:userId/:thing', async function (req, res) {
             offset = 0;
             do {
                 const url = new URL(
-                    `https://osu.ppy.sh/users/${userId}/scores/${thing}?mode=osu&limit=100&offset=${offset}`
+                    `https://osu.ppy.sh/users/${userId}/scores/${thing}?mode=${mode}&limit=100&offset=${offset}`
                 );
                 const params = {};
                 Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
@@ -254,23 +344,20 @@ app.get('/usrScores/:userId/:thing', async function (req, res) {
             res.send(response);
         } catch (error) {
             console.error(error);
-            res.send({ error: error.toString() });
+            res.send({error: error.toString()});
         }
     } catch (error) {
         console.error(error);
-        res.status(500).send({ error: "Error fetching data" });
+        res.status(500).send({error: "Error fetching data"});
     }
 });
-app.get('/rankInfo/', async function (req, res) {
+app.get('/getBG', async function (req, res) {
     try {
         const token = await getToken();
         try {
             const url = new URL(
-                `https://osu.ppy.sh/api/v2/rankings/osu/performance`
+                `https://osu.ppy.sh/api/v2/seasonal-backgrounds`
             );
-            const params = {};
-            Object.keys(params)
-                .forEach(key => url.searchParams.append(key, params[key]));
             const headers = {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
@@ -284,6 +371,7 @@ app.get('/rankInfo/', async function (req, res) {
             res.send(data);
         } catch (error) {
             res.send({error: error.toString()});
+            console.log(error.toString())
         }
     } catch (error) {
         res.status(500).send({error: 'Error fetching data'})

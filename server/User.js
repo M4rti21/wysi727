@@ -22,8 +22,24 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    rankHistory: [rankSchema],
-    countryRankHistory: [rankSchema]
+    modes: {
+        osu: {
+            rankHistory: [rankSchema],
+            countryRankHistory: [rankSchema]
+        },
+        taiko: {
+            rankHistory: [rankSchema],
+            countryRankHistory: [rankSchema]
+        },
+        fruits: {
+            rankHistory: [rankSchema],
+            countryRankHistory: [rankSchema]
+        },
+        mania: {
+            rankHistory: [rankSchema],
+            countryRankHistory: [rankSchema]
+        }
+    }
 })
 
 module.exports = mongoose.model("User", userSchema)

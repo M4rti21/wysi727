@@ -1,6 +1,6 @@
 :root {
     --col-primary: #f5f5f5;
-    --col-secondary: #141414;
+    --col-secondary: #212529;
     --col-accent: #7e7e7e;
     --btn-primary: #979797;
     --btn-secondary: #080808;
@@ -20,27 +20,43 @@
     font-weight: bold;
 }
 
+@font-face {
+    font-family: "Product Sans";
+    src: url('./fonts/Product Sans Regular.ttf');
+    font-style: normal;
+    font-weight: bold;
+}
+
+@font-face {
+    font-family: "Torus Pro";
+    src: url('./fonts/Torus-Regular.otf');
+    font-style: normal;
+    font-weight: bold;
+}
+
 body, html, main {
     margin: 0;
     padding: 0;
-    background-color: var(--col-secondary);
-    color: var(--col-primary);
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: "IBM Plex Mono", sans-serif;
     font-weight: bold;
     margin: 0;
     padding: 0;
 }
 
 * {
-    font-family: "IBM Plex Mono", sans-serif;
+    font-family: "Torus Pro", sans-serif;
     font-weight: normal;
+    text-decoration: none;
 }
 
-.input-group-text {
-    width: 8rem;
+.navBar > * {
+    color: var(--col-primary);
+}
+
+a {
+    text-decoration: none;
 }
 
 .form-control {
@@ -76,18 +92,21 @@ a:hover {
 
 *::-webkit-scrollbar {
     width: 8px;
-    background-color: #141414;
-    outline: #ffffff solid 2px;
+    background-color: #00000000;
+    outline: none;
+    border-radius: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
     background-color: #ffffff;
     cursor: pointer;
+    border-radius: 8px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
     background-color: #cccccc;
     cursor: pointer;
+    border-radius: 8px;
 }
 
 .beatmapImg {
@@ -96,4 +115,41 @@ a:hover {
 
 .bi-info-circle {
     cursor: help;
+}
+.volume-slider-container{
+    display: none;
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    height: 10px;
+    background: #ffffff33;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0;
+    height: 0;
+    background: #ffffff;
+    box-shadow: -400px 20px 0 400px #ffffff;
+    border-radius: 10px;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    background: #cccccc;
+}
+
+.mode-icon {
+    -webkit-filter: grayscale(1) invert(1);
+    filter: grayscale(1) invert(1);
+    height: 16px;
+    width: 16px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
