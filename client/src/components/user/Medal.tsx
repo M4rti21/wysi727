@@ -1,6 +1,6 @@
 import React from "react";
-import {MedalInterface} from "../interfaces/MedalsInterface";
-import {UserAchievementsEntity} from "../interfaces/UserCardInterface";
+import {MedalInterface} from "../../interfaces/MedalsInterface";
+import {UserAchievementsEntity} from "../../interfaces/UserCardInterface";
 
 interface MedalProps {
     thisMedal: MedalInterface,

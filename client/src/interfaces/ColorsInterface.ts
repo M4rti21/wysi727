@@ -2,6 +2,7 @@ export interface ColorsType {
     ui : {
         font: string,
         background: string,
+        main: string,
     }
     judgements: {
         x300: string,

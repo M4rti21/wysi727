@@ -1,17 +1,19 @@
 import {Link} from "react-router-dom";
-import VolumeSlider from "../VolumeSlider";
+import VolumeSlider from "./VolumeSlider";
 import React, {useState} from "react";
 import SearchInput from "./SearchInput";
 import ModeButton from "./ModeButton";
+import ColorPicker from "./ColorPicker";
 
 interface NavBarProps {
     onVolumeChange: (newVolume: number) => void;
     onModeChange: (newVolume: string) => void;
+    onColorChange: (colorBg: string, colorFont: string, colorSkills: string, colorLine: string, colorPP: string) => void;
     mode: string,
     username: string,
 }
 
-const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onModeChange, mode, username}) => {
+const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onColorChange, onModeChange, mode, username}) => {
     const [volume, setVolume] = useState<number>(10);
     const handleVolumeChange = (newVolume: number) => {
         setVolume(newVolume);
@@ -20,13 +22,15 @@ const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onModeChange, mode, user
     const handleModeChange = (modeName: string) => {
         onModeChange(modeName);
     };
-
+    const handleFontColorChange = (colorBg: string, colorFont: string, colorSkills: string, colorLine: string, colorPP: string) => {
+        onColorChange(colorBg, colorFont, colorSkills, colorLine, colorPP);
+    };
     return (
         <div className="navBar bg-black shadow row m-0 p-2 align-items-center">
             <div className="col-5 d-flex m-0 p-0 flex-row justify-content-start align-items-center gap-3">
                 <Link className="text-light text-decoration-none" to="/">
                     <div className="d-flex justify-content-center align-items-center me-2 gap-2">
-                        <img height={32} src={require('../../assets/wysi727-logo.png')} alt="logo"/>
+                        <img height={32} src={require('../../assets/osuextra-logo.png')} alt="logo"/>
                         <div className={"fs-5"}>wysi727</div>
                     </div>
                 </Link>
@@ -43,6 +47,7 @@ const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onModeChange, mode, user
                     <VolumeSlider volume={volume} onVolumeChange={handleVolumeChange}/>
                 </div>
                 <div className="d-flex flex-row justify-content-end gap-2">
+                    <ColorPicker onChange={handleFontColorChange}></ColorPicker>
                     <Link className="nav-link" to="/help"
                           data-tooltip-id="reactTooltip"
                           data-tooltip-content={`Need Help?`}>
@@ -57,7 +62,7 @@ const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onModeChange, mode, user
                             <i className="bi bi-discord"></i>
                         </button>
                     </a>
-                    <a href={"https://github.com/M4rti21/wysi727"} target={"_blank"}
+                    <a href={"https://github.com/M4rti21/osu-extra-react"} target={"_blank"}
                        data-tooltip-id="reactTooltip"
                        data-tooltip-content={`Contribute to the project`}>
                         <button className="btn btn-dark">

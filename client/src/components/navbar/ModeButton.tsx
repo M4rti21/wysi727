@@ -21,7 +21,7 @@ const VolumeSlider: React.FC<ChildButtonProps> = ({mode, onModeChange, username}
         <div className="d-flex flex-row align-items-center m-0 p-0 btn-group">
             <button className="btn btn-dark d-flex justify-content-center align-items-center" onClick={() => {
                 setShowModes(!showModes);
-            }}>
+            }} data-bs-toggle="button">
                 <img className="mode-icon" src={require(`../../assets/mode-icons/${mode}.svg`)} alt="ico"/>
             </button>
             {showModes ?

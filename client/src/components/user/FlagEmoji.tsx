@@ -18,7 +18,7 @@ const FlagEmoji = (props: propsInterface) => {
     }
     const emojiUnicode = countryCodeToEmoji(props.code);
     return (
-        <img height={props.size} src={require(`../assets/flags/${emojiUnicode}.svg`)} alt="flag" className=""/>
+        <img height={props.size} src={require(`../../assets/flags/${emojiUnicode}.svg`)} alt="flag" className=""/>
     );
 }
 export default FlagEmoji;

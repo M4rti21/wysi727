@@ -1,8 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
-import {ItemsEntity} from "../interfaces/ScoresInterface";
+import {ItemsEntity} from "../../interfaces/ScoresInterface";
 import {ParallaxBanner} from "react-scroll-parallax";
-import {ColorsType} from "../interfaces/ColorsInterface";
-import {Tooltip as ReactTooltip} from "react-tooltip";
+import {ColorsType} from "../../interfaces/ColorsInterface";
 
 interface propsInterface {
     data: ItemsEntity;
@@ -44,9 +43,10 @@ const Score = (props: propsInterface) => {
         }
     }, [props.volume]);
     return (
-        <div className="rounded-4 my-1 flex-grow-1 overflow-hidden"
+        <div className="rounded-4 mb-2 overflow-hidden"
         style={{
-            color: props.colors.ui.font
+            color: props.colors.ui.font,
+            minHeight: 100,
         }}>
             <ParallaxBanner
                 layers={[
@@ -54,9 +54,8 @@ const Score = (props: propsInterface) => {
                         image: props.data.beatmapset.covers.cover,
                         speed: 0
                     }]}
-                style={{width: "100%"}}>
-                <div className="p-2 m-0 h-100 w-100"
-                     style={{backdropFilter: "brightness(40%) blur(4px)"}}>
+                style={{width: "100%", height: "100%"}}>
+                <div className="p-2 m-0" style={{backdropFilter: "brightness(40%) blur(4px)"}}>
                     <div className="d-flex flex-row align-items-center gap-3">
                         <div className="beatmapImg ps-1 rounded-3 ratio-1x1" style={{
                             backgroundImage: `url(${props.data.beatmapset.covers.list})`,
@@ -210,7 +209,7 @@ const Score = (props: propsInterface) => {
                             <div className="d-flex flex-row flex-wrap gap-1">
                                 {props.data.mods?.map((mod) => (
                                     <img height={18}
-                                         src={require(`../assets/mod-icons/${mod.acronym.toLowerCase()}.png`)}
+                                         src={require(`../../assets/mod-icons/${mod.acronym.toLowerCase()}.png`)}
                                          alt={mod.acronym}
                                          data-tooltip-id="reactTooltip"
                                          data-tooltip-content={mod.acronym}/>
