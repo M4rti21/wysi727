@@ -48,10 +48,6 @@ const Score = (props: propsInterface) => {
         style={{
             color: props.colors.ui.font
         }}>
-            <ReactTooltip
-                id="reactTooltip"
-                style={{zIndex: 3}}
-            />
             <ParallaxBanner
                 layers={[
                     {
@@ -147,7 +143,7 @@ const Score = (props: propsInterface) => {
                         </div>
                         <div>|</div>
                         <div>
-                            <i className="bi bi-stopwatch me-1"></i>{`${Math.floor(props.data.beatmap.total_length / 60)}:${Math.floor(props.data.beatmap.total_length - Math.floor(props.data.beatmap.total_length / 60) * 60)}`}
+                            <i className="bi bi-stopwatch me-1"></i>{`${Math.floor(props.data.beatmap.total_length / 60)}:${Math.floor(props.data.beatmap.total_length - Math.floor(props.data.beatmap.total_length / 60) * 60).toString().padStart(2, '0')}`}
                         </div>
                         <div>|</div>
                         <div>
@@ -211,7 +207,7 @@ const Score = (props: propsInterface) => {
                                 </button>) : ""}
                         </div>
                         <div className="d-flex flex-row gap-2 align-items-center">
-                            <div className="d-flex flex-row gap-1">
+                            <div className="d-flex flex-row flex-wrap gap-1">
                                 {props.data.mods?.map((mod) => (
                                     <img height={18}
                                          src={require(`../assets/mod-icons/${mod.acronym.toLowerCase()}.png`)}

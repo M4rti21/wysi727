@@ -1,7 +1,11 @@
 import React, {useState} from "react";
 import {useNavigate} from 'react-router-dom';
 
-const Input = () => {
+interface InputProps {
+    mode: string,
+}
+
+const SearchInput = (props: InputProps) => {
     const navigate = useNavigate();
     const [data, setData] = useState('');
     const handleChange = (e: any) => {
@@ -11,7 +15,7 @@ const Input = () => {
     const handleSubmit = (e: any) => {
         e.preventDefault();
         console.log("this works")
-        navigate(`/users/${data}`);
+        navigate(`/users/${data}/${props.mode}`);
         setData('');
     }
     return (
@@ -31,4 +35,4 @@ const Input = () => {
         </form>
     );
 }
-export default Input;
+export default SearchInput;

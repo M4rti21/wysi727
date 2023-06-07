@@ -27,6 +27,8 @@ import {ParallaxBanner} from "react-scroll-parallax";
 import {ItemsEntity, ItemsEntity1, ItemsEntity2, scoresTypes} from "../interfaces/ScoresInterface";
 import 'chartjs-adapter-moment';
 import {ColorsType} from "../interfaces/ColorsInterface";
+import {UserMedalsInterface} from "../interfaces/MedalsInterface";
+import Medal from "./Medal";
 
 Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler, zoomPlugin);
 Chart.register(...registerables);
@@ -35,20 +37,15 @@ interface userData {
     data: any;
     volume: number;
     mode: string;
+    medals: UserMedalsInterface;
+    scores: scoresTypes;
+    username: string;
 }
 
 type Mode = 'x' | 'y' | 'xy';
 type ModeSnap = "x" | "y" | "nearest" | "index" | "dataset" | "point" | undefined;
 type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
 type AxisType = "time" | undefined;
-type ModeTime = 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year';
-
-const scoresTitles = {
-    best: 'Best Scores',
-    first: 'First Place',
-    pinned: 'Pinned Scores',
-    recent: 'Recent Scores',
-}
 const UserCard: React.FC<userData> = (props: userData) => {
     const colors: ColorsType = {
         ui: {
@@ -82,38 +79,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
         }
     }
     const [activeScores, setActiveScores] = useState<ItemsEntity[] | ItemsEntity1[] | ItemsEntity2[]>([]);
-    const [searchingScores, setSearchingScores] = useState<boolean>(true);
-    const [scoresTitle, setScoresTitle] = useState<string>(scoresTitles.pinned);
-    const [userScores, setUserScores] = useState<scoresTypes>({
-        best: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        },
-        firsts: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        },
-        pinned: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        },
-        recent: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        }
-    });
+    const [searchingScores, setSearchingScores] = useState<boolean>(false);
     const getFirstCountryLog = () => {
         const today = new Date(props.data.db_rank_history?.country_rank[0]?.date);
         return today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear();
@@ -126,53 +92,6 @@ const UserCard: React.FC<userData> = (props: userData) => {
         firstCountryLog = today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear();
     }
 
-    async function getScores(thing: string) {
-        const response = await fetch(`http://localhost:5000/usrScores/${props.data.id}/${thing}/${props.mode}`);
-        return await response.json();
-    }
-
-    const getNewScores = async () => {
-        const newScores: scoresTypes = {
-            best: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            },
-            firsts: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            },
-            pinned: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            },
-            recent: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            }
-        };
-        newScores.pinned.items = await getScores('pinned');
-        newScores.firsts.items = await getScores('firsts');
-        newScores.best.items = await getScores('best');
-        newScores.recent.items = await getScores('recent');
-        setSearchingScores(true);
-        setUserScores(newScores);
-        setActiveScores(newScores.pinned.items);
-        setScoresTitle(scoresTitles.pinned);
-        setSearchingScores(false);
-        console.log(newScores);
-    }
     const secondsToDHMS = (seconds: number) => {
         seconds = Number(seconds);
         let d = Math.floor(seconds / (3600 * 24));
@@ -448,103 +367,105 @@ const UserCard: React.FC<userData> = (props: userData) => {
             FL: 0.2,
             EZ: 0.5,
         };
-        for (let score of userScores.best.items) {
-            allPPs.push(Math.round(score.pp));
-            //CS
-            if (score.mods.some(obj => obj.acronym === 'EZ')) {
-                avgCS += score.beatmap.cs / 2;
-            } else if (score.mods.some(obj => obj.acronym === 'HR')) {
-                if (score.beatmap.cs * 1.3 < 10) {
-                    avgCS += score.beatmap.cs * 1.3;
-                    allCS.push(score.beatmap.cs * 1.3);
+        if (props.scores?.best?.items) {
+            for (let score of props.scores.best.items) {
+                allPPs.push(Math.round(score.pp));
+                //CS
+                if (score.mods.some(obj => obj.acronym === 'EZ')) {
+                    avgCS += score.beatmap.cs / 2;
+                } else if (score.mods.some(obj => obj.acronym === 'HR')) {
+                    if (score.beatmap.cs * 1.3 < 10) {
+                        avgCS += score.beatmap.cs * 1.3;
+                        allCS.push(score.beatmap.cs * 1.3);
+                    } else {
+                        avgCS += 10;
+                        allCS.push(10);
+                    }
                 } else {
-                    avgCS += 10;
-                    allCS.push(10);
+                    avgCS += score.beatmap.cs;
+                    allCS.push(score.beatmap.cs);
                 }
-            } else {
-                avgCS += score.beatmap.cs;
-                allCS.push(score.beatmap.cs);
-            }
-            //AR
-            if (score.mods.some(obj => obj.acronym === 'EZ')) {
-                if (score.mods.some(obj => obj.acronym === 'DT')) {
-                    avgAR += (score.beatmap.ar * 0.5) * 1.33;
-                    allAR.push((score.beatmap.ar * 0.5) * 1.33);
+                //AR
+                if (score.mods.some(obj => obj.acronym === 'EZ')) {
+                    if (score.mods.some(obj => obj.acronym === 'DT')) {
+                        avgAR += (score.beatmap.ar * 0.5) * 1.33;
+                        allAR.push((score.beatmap.ar * 0.5) * 1.33);
+                    } else if (score.mods.some(obj => obj.acronym === 'HT')) {
+                        avgAR += (score.beatmap.ar * 0.5) * 0.67;
+                        allAR.push((score.beatmap.ar * 0.5) * 0.67);
+                    } else {
+                        avgAR += score.beatmap.ar * 0.5;
+                        allAR.push(score.beatmap.ar * 0.5);
+                    }
+                } else if (score.mods.some(obj => obj.acronym === 'HR')) {
+                    if (score.mods.some(obj => obj.acronym === 'DT')) {
+                        if (score.beatmap.ar * 1.4 * 1.33 < 11) {
+                            avgAR += score.beatmap.ar * 1.4 * 1.33;
+                            allAR.push(score.beatmap.ar * 1.4 * 1.33);
+                        } else {
+                            avgAR += 11;
+                            allAR.push(11);
+                        }
+                    } else if (score.mods.some(obj => obj.acronym === 'HT')) {
+                        if (score.beatmap.ar * 1.4 * 0.67 < 11) {
+                            avgAR += score.beatmap.ar * 1.4 * 0.67;
+                            allAR.push(score.beatmap.ar * 1.4 * 0.67);
+                        } else {
+                            avgAR += 11;
+                            allAR.push(11);
+                        }
+                    } else {
+                        if (score.beatmap.ar * 1.4 < 10) {
+                            avgAR += score.beatmap.ar * 1.4;
+                            allAR.push(score.beatmap.ar * 1.4);
+                        } else {
+                            allAR.push(10);
+                        }
+                    }
+                } else if (score.mods.some(obj => obj.acronym === 'DT')) {
+                    avgAR += score.beatmap.ar * 1.33;
+                    allAR.push(score.beatmap.ar * 1.33);
                 } else if (score.mods.some(obj => obj.acronym === 'HT')) {
-                    avgAR += (score.beatmap.ar * 0.5) * 0.67;
-                    allAR.push((score.beatmap.ar * 0.5) * 0.67);
+                    avgAR += score.beatmap.ar * 0.67;
+                    allAR.push(score.beatmap.ar * 0.67);
                 } else {
-                    avgAR += score.beatmap.ar * 0.5;
-                    allAR.push(score.beatmap.ar * 0.5);
+                    avgAR += score.beatmap.ar;
+                    allAR.push(score.beatmap.ar);
                 }
-            } else if (score.mods.some(obj => obj.acronym === 'HR')) {
+
+                let starRating = score.beatmap.difficulty_rating;
+
+                if (score.mods.some(obj => obj.acronym === 'EZ')) {
+                    starRating *= modFactors.EZ;
+                }
+                if (score.mods.some(obj => obj.acronym === 'HR')) {
+                    starRating *= modFactors.HR;
+                }
+
                 if (score.mods.some(obj => obj.acronym === 'DT')) {
-                    if (score.beatmap.ar * 1.4 * 1.33 < 11) {
-                        avgAR += score.beatmap.ar * 1.4 * 1.33;
-                        allAR.push(score.beatmap.ar * 1.4 * 1.33);
-                    } else {
-                        avgAR += 11;
-                        allAR.push(11);
-                    }
-                } else if (score.mods.some(obj => obj.acronym === 'HT')) {
-                    if (score.beatmap.ar * 1.4 * 0.67 < 11) {
-                        avgAR += score.beatmap.ar * 1.4 * 0.67;
-                        allAR.push(score.beatmap.ar * 1.4 * 0.67);
-                    } else {
-                        avgAR += 11;
-                        allAR.push(11);
-                    }
-                } else {
-                    if (score.beatmap.ar * 1.4 < 10) {
-                        avgAR += score.beatmap.ar * 1.4;
-                        allAR.push(score.beatmap.ar * 1.4);
-                    } else {
-                        allAR.push(10);
-                    }
+                    starRating *= modFactors.DT;
                 }
-            } else if (score.mods.some(obj => obj.acronym === 'DT')) {
-                avgAR += score.beatmap.ar * 1.33;
-                allAR.push(score.beatmap.ar * 1.33);
-            } else if (score.mods.some(obj => obj.acronym === 'HT')) {
-                avgAR += score.beatmap.ar * 0.67;
-                allAR.push(score.beatmap.ar * 0.67);
-            } else {
-                avgAR += score.beatmap.ar;
-                allAR.push(score.beatmap.ar);
-            }
+                if (score.mods.some(obj => obj.acronym === 'HT')) {
+                    starRating *= modFactors.HT;
+                }
 
-            let starRating = score.beatmap.difficulty_rating;
+                if (score.mods.some(obj => obj.acronym === 'FL')) {
+                    starRating *= modFactors.FL;
+                }
 
-            if (score.mods.some(obj => obj.acronym === 'EZ')) {
-                starRating *= modFactors.EZ;
+                avgHA += score.beatmap.accuracy;
+                allHA.push(score.beatmap.accuracy);
+                avgSR += starRating;
+                allSR.push(starRating);
+                avgSpd += score.mods.some(obj => obj.acronym === 'DT') ? score.beatmap.bpm * 1.5 : score.mods.some(obj => obj.acronym === 'HT') ? score.beatmap.bpm * 0.75 : score.beatmap.bpm;
+                allSpd.push((score.mods.some(obj => obj.acronym === 'DT') ? score.beatmap.bpm * 1.5 : score.mods.some(obj => obj.acronym === 'HT') ? score.beatmap.bpm * 0.75 : score.beatmap.bpm));
             }
-            if (score.mods.some(obj => obj.acronym === 'HR')) {
-                starRating *= modFactors.HR;
-            }
-
-            if (score.mods.some(obj => obj.acronym === 'DT')) {
-                starRating *= modFactors.DT;
-            }
-            if (score.mods.some(obj => obj.acronym === 'HT')) {
-                starRating *= modFactors.HT;
-            }
-
-            if (score.mods.some(obj => obj.acronym === 'FL')) {
-                starRating *= modFactors.FL;
-            }
-
-            avgHA += score.beatmap.accuracy;
-            allHA.push(score.beatmap.accuracy);
-            avgSR += starRating;
-            allSR.push(starRating);
-            avgSpd += score.mods.some(obj => obj.acronym === 'DT') ? score.beatmap.bpm * 1.5 : score.mods.some(obj => obj.acronym === 'HT') ? score.beatmap.bpm * 0.75 : score.beatmap.bpm;
-            allSpd.push((score.mods.some(obj => obj.acronym === 'DT') ? score.beatmap.bpm * 1.5 : score.mods.some(obj => obj.acronym === 'HT') ? score.beatmap.bpm * 0.75 : score.beatmap.bpm));
         }
-        avgCS /= userScores.best.items.length * 10;
-        avgAR /= userScores.best.items.length * 10;
-        avgHA /= userScores.best.items.length * 10;
-        avgSR /= userScores.best.items.length * 10;
-        avgSpd /= userScores.best.items.length * 300;
+        avgCS /= props.scores.best.items.length * 10;
+        avgAR /= props.scores.best.items.length * 10;
+        avgHA /= props.scores.best.items.length * 10;
+        avgSR /= props.scores.best.items.length * 10;
+        avgSpd /= props.scores.best.items.length * 300;
         accScore = Math.round(avgHA * 100);
         avgCS *= 0.4;
         avgHA *= 0.6;
@@ -560,9 +481,6 @@ const UserCard: React.FC<userData> = (props: userData) => {
             calculateStandardDeviation(allSpd) / 4
         ));
     }
-    useEffect(() => {
-        getNewScores().then()
-    }, [props.mode, props.data.id]);
     calculateScores();
     const skillsData = {
         labels: [
@@ -638,13 +556,16 @@ const UserCard: React.FC<userData> = (props: userData) => {
             }
         }
     };
+    useEffect(() => {
+        setActiveScores(props.scores.pinned.items);
+        document.title = `${props.username} · wysi727`;
+    }, [props.scores, props.username]);
     return (
         <div className="row m-0" style={{
             maxWidth: 1200,
             backgroundColor: colors.ui.background,
             color: colors.ui.font
         }}>
-            <ReactTooltip id="reactTooltip" style={{zIndex: 10}}/>
             <div className="topPanel m-0 p-0 col-12" style={{overflow: "hidden", position: "relative"}}>
                 <ParallaxBanner layers={
                     [{
@@ -693,10 +614,10 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                     <div className="fs-2 d-flex flex-row align-items-center">
                                         <div className="d-flex flex-row align-items-center"
                                              data-tooltip-id="reactTooltip"
-                                             data-tooltip-content={`Peak Country Rank: #${
+                                             data-tooltip-content={`Peak Country Rank: #${props.data.db_rank_history.country_rank.length ?
                                                  props.data.db_rank_history.country_rank.reduce((prev: any, current: any) => {
                                                      return (prev.rank > current.rank) ? prev : current;
-                                                 }).rank} (started logging in ${firstCountryLog})`}>
+                                                 }).rank : ''} (started logging in ${firstCountryLog})`}>
                                             <img width="32" className="countryIco me-2" alt="ico"
                                                  src={require(`../assets/countries/${props.data.country.code.toLowerCase()}/vector.svg`)}/>
                                             #{props.data.statistics.rank.country?.toLocaleString()}
@@ -818,7 +739,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                     backgroundColor: colors.judgements.x300,
                                     height: 15,
                                     width: 15
-                                }}></div>300: {hits_300_percent.toFixed(2)}%</span><span>{props.data.statistics.count_300?.toLocaleString()}</span>
+                                }}
+                                     className={"rounded-1"}></div>300: {hits_300_percent.toFixed(2)}%</span><span>{props.data.statistics.count_300?.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -826,7 +748,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.judgements.x100,
                                             height: 15,
                                             width: 15
-                                        }}></div>100: {hits_100_percent.toFixed(2)}%</span><span>{props.data.statistics.count_100?.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>100: {hits_100_percent.toFixed(2)}%</span><span>{props.data.statistics.count_100?.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -834,7 +757,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.judgements.x50,
                                             height: 15,
                                             width: 15
-                                        }}></div>50: {hits_50_percent.toFixed(2)}%</span><span>{props.data.statistics.count_50?.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>50: {hits_50_percent.toFixed(2)}%</span><span>{props.data.statistics.count_50?.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -842,7 +766,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.judgements.xMiss,
                                             height: 15,
                                             width: 15
-                                        }}></div>0: {hits_miss_percent.toFixed(2)}%</span><span>{props.data.statistics.count_miss?.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>0: {hits_miss_percent.toFixed(2)}%</span><span>{props.data.statistics.count_miss?.toLocaleString()}</span>
                                     </li>
                                 </ul>
                             </div>
@@ -860,7 +785,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.ranks.xh,
                                             height: 15,
                                             width: 15
-                                        }}></div>XH: {(ranks_xh_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.ssh.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>XH: {(ranks_xh_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.ssh.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -868,7 +794,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.ranks.x,
                                             height: 15,
                                             width: 15
-                                        }}></div>X: {(ranks_x_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.ss.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>X: {(ranks_x_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.ss.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -876,7 +803,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.ranks.sh,
                                             height: 15,
                                             width: 15
-                                        }}></div>SH: {(ranks_sh_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.sh.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>SH: {(ranks_sh_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.sh.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -884,7 +812,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.ranks.s,
                                             height: 15,
                                             width: 15
-                                        }}></div>S: {(ranks_s_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.s.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>S: {(ranks_s_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.s.toLocaleString()}</span>
                                     </li>
                                     <li className="d-flex flex-row align-items-center justify-content-between"><span
                                         className="d-flex flex-row align-items-center gap-1"><div
@@ -892,7 +821,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                             backgroundColor: colors.ranks.a,
                                             height: 15,
                                             width: 15
-                                        }}></div>A: {(ranks_a_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.a.toLocaleString()}</span>
+                                        }}
+                                        className={"rounded-1"}></div>A: {(ranks_a_percent).toFixed(2)}%</span><span>{props.data.statistics.grade_counts.a.toLocaleString()}</span>
                                     </li>
                                 </ul>
                             </div>
@@ -929,10 +859,76 @@ const UserCard: React.FC<userData> = (props: userData) => {
                             </div>
                             <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
                                 <div className="d-flex flex-row justify-content-between">
-                                    <h6>Top {userScores.best.items.length} plays:</h6>
+                                    <h6>Top {props.scores.best.items.length} plays:</h6>
                                 </div>
                                 <div className="w-100 flex-grow-1">
                                     <Bar data={ppData} options={ppDataOptions}/>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="rounded-5 shadow row mb-3">
+                            <div className="col-12 row m-0 p-3 d-flex flex-column">
+                                <div className={"d-flex flex-row justify-content-between"}>
+                                    <div>Medals:</div>
+                                    <div>({props.data.user_achievements.length}/{
+                                        props.medals.medalHushHush.length +
+                                        props.medals.medalSkills.length +
+                                        props.medals.modIntroduction.length +
+                                        props.medals.medalBeatmapChallenges.length +
+                                        props.medals.medalBeatmapSpotlights.length +
+                                        props.medals.medalBeatmapPacks.length
+                                    })
+                                    </div>
+                                </div>
+                                <div className={"p-3 d-flex flex-column shadow rounded-5"}>
+                                    <div>Hush Hush:</div>
+                                    <div className="d-flex flex-row flex-wrap gap-2 pt-3 justify-content-center">
+                                        {props.medals.medalHushHush.map((medal: any) => (
+                                            <Medal thisMedal={medal} userMedals={props.data.user_achievements}/>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={"p-3 d-flex flex-column shadow rounded-5"}>
+                                    <div>Beatmap Challenges:</div>
+                                    <div className="d-flex flex-row flex-wrap gap-2 pt-3 justify-content-center">
+                                        {props.medals.medalBeatmapChallenges.map((medal: any) => (
+                                            <Medal thisMedal={medal} userMedals={props.data.user_achievements}/>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={"p-3 d-flex flex-column shadow rounded-5"}>
+                                    <div>Beatmap Packs:</div>
+                                    <div className="d-flex flex-row flex-wrap gap-2 pt-3 justify-content-center">
+                                        {props.medals.medalBeatmapPacks.map((medal: any) => (
+                                            <Medal thisMedal={medal} userMedals={props.data.user_achievements}/>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={"p-3 d-flex flex-column shadow rounded-5"}>
+                                    <div>Beatmap Spotlights:</div>
+                                    <div className="d-flex flex-row flex-wrap gap-2 pt-3 justify-content-center">
+                                        {props.medals.medalBeatmapSpotlights.map((medal: any) => (
+                                            <Medal thisMedal={medal} userMedals={props.data.user_achievements}/>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={"p-3 d-flex flex-column shadow rounded-5"}>
+                                    <div>Skill & Dedication:</div>
+                                    <div className="d-flex flex-row flex-wrap gap-2 pt-3 justify-content-center">
+                                        {props.medals.medalSkills.map((medal: any) => (
+                                            <Medal thisMedal={medal} userMedals={props.data.user_achievements}/>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={"p-3 d-flex flex-column shadow rounded-5"}>
+                                    <div>Mod Introduction:</div>
+                                    <div className="d-flex flex-row flex-wrap gap-2 pt-3 justify-content-center">
+                                        {props.medals.modIntroduction.map((medal: any, index:number) => (
+                                            <Medal thisMedal={medal}
+                                                   userMedals={props.data.user_achievements}
+                                                   key={index}/>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -945,48 +941,44 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                 <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"Pinned Scores"}
-                                        disabled={activeScores === userScores.pinned.items}
+                                        disabled={activeScores === props.scores.pinned.items}
                                         onClick={() => {
                                             setSearchingScores(true);
-                                            setScoresTitle(scoresTitles.pinned);
+                                            setActiveScores(props.scores.pinned.items);
                                             setSearchingScores(false);
-                                            setActiveScores(userScores.pinned.items);
                                         }}>
                                     <i className="bi bi-pin-angle"></i>
                                 </button>
                                 <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"First Place"}
-                                        disabled={activeScores === userScores.firsts.items}
+                                        disabled={activeScores === props.scores.firsts.items}
                                         onClick={() => {
                                             setSearchingScores(true);
-                                            setScoresTitle(scoresTitles.first);
+                                            setActiveScores(props.scores.firsts.items);
                                             setSearchingScores(false);
-                                            setActiveScores(userScores.firsts.items);
                                         }}>
                                     <i className="bi bi-star"></i>
                                 </button>
                                 <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"Best Scores"}
-                                        disabled={activeScores === userScores.best.items}
+                                        disabled={activeScores === props.scores.best.items}
                                         onClick={() => {
                                             setSearchingScores(true);
-                                            setScoresTitle(scoresTitles.best);
+                                            setActiveScores(props.scores.best.items);
                                             setSearchingScores(false);
-                                            setActiveScores(userScores.best.items);
                                         }}>
                                     <i className="bi bi-bar-chart-line"></i>
                                 </button>
                                 <button className="btn btn-dark rounded-0 flex-grow-1"
                                         data-tooltip-id={"reactTooltip"}
                                         data-tooltip-content={"Recent Scores"}
-                                        disabled={activeScores === userScores.recent.items}
+                                        disabled={activeScores === props.scores.recent.items}
                                         onClick={() => {
                                             setSearchingScores(true);
-                                            setScoresTitle(scoresTitles.recent);
+                                            setActiveScores(props.scores.recent.items);
                                             setSearchingScores(false);
-                                            setActiveScores(userScores.recent.items);
                                         }}>
                                     <i className="bi bi-clock-history"></i>
                                 </button>
@@ -999,7 +991,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
                                     <span className="visually-hidden">Loading...</span>
                                 </div> :
                                 <>{activeScores.map((score: any, index: number) => (
-                                    <Score data={score} colors={colors} num={index} volume={props.volume}/>
+                                    <Score data={score} colors={colors} num={index} volume={props.volume} key={index}/>
                                 ))}</>}
 
                         </div>
