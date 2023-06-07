@@ -26,7 +26,7 @@ const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onModeChange, mode, user
             <div className="col-5 d-flex m-0 p-0 flex-row justify-content-start align-items-center gap-3">
                 <Link className="text-light text-decoration-none" to="/">
                     <div className="d-flex justify-content-center align-items-center me-2 gap-2">
-                        <img height={32} src={require('../../assets/osuextra-logo.png')} alt="logo"/>
+                        <img height={32} src={require('../../assets/wysi727-logo.png')} alt="logo"/>
                         <div className={"fs-5"}>wysi727</div>
                     </div>
                 </Link>
@@ -57,7 +57,7 @@ const Navbar: React.FC<NavBarProps> = ({onVolumeChange, onModeChange, mode, user
                             <i className="bi bi-discord"></i>
                         </button>
                     </a>
-                    <a href={"https://github.com/M4rti21/osu-extra-react"} target={"_blank"}
+                    <a href={"https://github.com/M4rti21/wysi727"} target={"_blank"}
                        data-tooltip-id="reactTooltip"
                        data-tooltip-content={`Contribute to the project`}>
                         <button className="btn btn-dark">
