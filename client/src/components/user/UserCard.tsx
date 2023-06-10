@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from "react";
 import {MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity, User} from "../../interfaces/UserCardInterface";
 import "../../interfaces/ScoresInterface";
 import Score from "./Score";
-import {Bar, Doughnut, Line, Radar} from 'react-chartjs-2';
+import {Bar, Doughnut, Line} from 'react-chartjs-2';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import 'chartjs-plugin-annotation';
 import {
@@ -20,9 +20,7 @@ import {
     Filler
 } from 'chart.js'
 import 'chartjs-adapter-date-fns';
-import FlagEmoji from "./FlagEmoji";
 import {registerables} from 'chart.js';
-import {ParallaxBanner} from "react-scroll-parallax";
 import {ItemsEntity, ItemsEntity1, ItemsEntity2, scoresTypes} from "../../interfaces/ScoresInterface";
 import 'chartjs-adapter-moment';
 import {ColorsType} from "../../interfaces/ColorsInterface";
@@ -30,6 +28,8 @@ import {UserMedalsInterface} from "../../interfaces/MedalsInterface";
 import Medal from "./Medal";
 import BarPanel from "./panels/BarPanel";
 import TopPanel from "./panels/TopPanel";
+import BBCode from '@bbob/react';
+import presetReact from '@bbob/preset-react';
 
 Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler, zoomPlugin);
 Chart.register(...registerables);
@@ -49,6 +49,7 @@ type ModeSnap = "x" | "y" | "nearest" | "index" | "dataset" | "point" | undefine
 type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
 type AxisType = "time" | undefined;
 const UserCard: React.FC<userData> = (props: userData) => {
+    const plugins = [presetReact()];
     const [activeScores, setActiveScores] = useState<ItemsEntity[] | ItemsEntity1[] | ItemsEntity2[]>([]);
     const [searchingScores, setSearchingScores] = useState<boolean>(false);
     const getFirstCountryLog = () => {
@@ -557,8 +558,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
             <TopPanel colors={props.colors} data={props.data} skillsData={skillsData} skillsOptions={skillsOptions}
                       playtime={playtime} firstCountryLog={firstCountryLog}/>
             <BarPanel data={props.data} colors={props.colors}/>
-            <div className="midPanel col-12 row gap-3 p-3 pb-4 m-0">
-                <div className="d-flex flex-column col-8 m-0" ref={contentRef} style={{maxHeight: "100%"}}>
+            <div className="midPanel col-12 row gap-3 p-3 pb-5 m-0 mb-5">
+                <div className="d-flex flex-column col-12 col-md m-0" ref={contentRef} style={{maxHeight: "100%"}}>
                     <div className="rounded-5 shadow row mb-3" style={{backgroundColor: props.colors.ui.background}}>
                         <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
                             <div>
@@ -768,7 +769,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
                         </div>
                     </div>
                 </div>
-                <div className="rounded-5 shadow m-0 p-3 col" ref={sidebarRef}
+                <div className="rounded-5 shadow m-0 p-3 col-md-4 col-12 d-flex flex-column"
                      style={{backgroundColor: props.colors.ui.background}}>
                     <div
                         className="m-0 d-flex flex-row align-items-center justify-content-between overflow-hidden rounded-4">
@@ -835,8 +836,7 @@ const UserCard: React.FC<userData> = (props: userData) => {
                             </button>
                         </div>
                     </div>
-                    <div className="m-0 py-3"
-                         style={{overflowY: "scroll", maxHeight: "99%"}}>
+                    <div className="m-0 p-0 flex-grow-1" style={{overflowY: "scroll", maxHeight: "98%"}}>
                         {searchingScores ?
                             <div className="spinner-border mx-auto mt-5" role="status">
                                 <span className="visually-hidden">Loading...</span>
@@ -849,8 +849,8 @@ const UserCard: React.FC<userData> = (props: userData) => {
                     </div>
                 </div>
             </div>
-            {/*<div className="botPanel p-3 text-light" dangerouslySetInnerHTML={{__html: props.data.page.html}}*/}
-            {/*     style={{backgroundColor: '#2a2226'}}></div>*/}
+            {/*<div dangerouslySetInnerHTML={{__html: props.data.page.html}}>*/}
+            {/*</div>*/}
         </div>
     )
 }

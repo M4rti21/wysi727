@@ -36,6 +36,8 @@ const ColorPicker: React.FC<ColorPickerProps> = ({onChange}) => {
 
     return (
         <div
+            data-tooltip-id="reactTooltip"
+            data-tooltip-content={`Customize the site!`}
             className="d-flex justify-content-center flex-column align-items-center colorPickerContainerFull position-relative shadow">
             <button className="btn btn-dark mb-2" onClick={() => {
                 setShowPicker(!showPicker);

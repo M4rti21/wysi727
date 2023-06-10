@@ -54,7 +54,7 @@ const Score = (props: propsInterface) => {
                         image: props.data.beatmapset.covers.cover,
                         speed: 0
                     }]}
-                style={{width: "100%", height: "100%"}}>
+                style={{width: "100%", height: "100%"}} className={"rounded-4 overflow-hidden"}>
                 <div className="p-2 m-0" style={{backdropFilter: "brightness(40%) blur(4px)"}}>
                     <div className="d-flex flex-row align-items-center gap-3">
                         <div className="beatmapImg ps-1 rounded-3 ratio-1x1" style={{

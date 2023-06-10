@@ -139,7 +139,7 @@ const App = () => {
     }, []);
     return (
         <div style={{height: "100vh", width: "100vw", overflow: "hidden"}}>
-            <ReactTooltip id="reactTooltip" style={{zIndex: 10}}/>
+            <ReactTooltip id="reactTooltip" style={{zIndex: 20}}/>
             <Navbar onVolumeChange={handleVolumeChange} onModeChange={handleModeChange} mode={mode}
                     username={username} onColorChange={handleColorChange}/>
             <main className="d-flex flex-column" style={
