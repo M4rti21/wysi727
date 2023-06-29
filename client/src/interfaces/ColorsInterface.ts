@@ -1,7 +1,7 @@
 export interface ColorsType {
     ui : {
         font: string,
-        background: string,
+        bg: string,
         main: string,
     }
     judgements: {

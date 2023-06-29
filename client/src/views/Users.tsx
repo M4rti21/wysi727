@@ -1,133 +1,102 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useReducer} from "react";
+import {useNavigate, useParams} from "react-router-dom";
+import {MedalInterface} from "../interfaces/MedalsInterface";
+import {modeSettings, ModeSettingsType} from "../store/store";
+import {ACTION_TYPES, SCORES_INITIAL_STATE, scoresReducer, USER_INITIAL_STATE, userReducer} from "../store/userReducer";
 import '../interfaces/UserCardInterface'
 import UserCard from "../components/user/UserCard";
-import {User} from "../interfaces/UserCardInterface";
-import {useParams} from "react-router-dom";
-import {UserMedalsInterface} from "../interfaces/MedalsInterface";
-import {scoresTypes} from "../interfaces/ScoresInterface";
-import ColorPicker from "../components/navbar/ColorPicker";
-import {ColorResult} from "react-color";
-import {ColorsType} from "../interfaces/ColorsInterface";
 
 interface PropsInterface {
-    volume: number,
-    medals: UserMedalsInterface,
-    propsMode: string,
-    colors: ColorsType;
-    sendUsername: (currUser: string) => void;
+    medals: { [key: string]: MedalInterface[] },
 }
 
-const Users: React.FC<PropsInterface> = ({volume, medals, propsMode, sendUsername, colors}) => {
-    const [userData, setUserData] = useState<User[]>([]);
-    let searching = false;
-    let {username} = useParams();
-    let {mode} = useParams();
-    const [userScores, setUserScores] = useState<scoresTypes>({
-        best: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        },
-        firsts: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        },
-        pinned: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
-        },
-        recent: {
-            items: [],
-            pagination: {
-                hasMore: false
-            },
-            count: 0
+const Users = (props: PropsInterface) => {
+    const navigate = useNavigate();
+
+    const {urlUsername} = useParams();
+    const {urlMode} = useParams();
+
+    const [user, userDispatch] = useReducer(userReducer, USER_INITIAL_STATE);
+    const [scores, scoresDispatch] = useReducer(scoresReducer, SCORES_INITIAL_STATE);
+
+    const mode = modeSettings((state: ModeSettingsType) => state.mode);
+    const setMode = modeSettings((state: ModeSettingsType) => state.setMode);
+    const getData = async (userId: number) => {
+        userDispatch({type: ACTION_TYPES.FETCH_START});
+        fetch(`http://localhost:5000/usrInfo/${userId}/${mode}`)
+            .then(async (data) => {
+                const res = await data.json();
+                console.log(res);
+                userDispatch({type: ACTION_TYPES.FETCH_SUCCESS, payload: res})
+            })
+            .catch((err) => {
+                userDispatch({type: ACTION_TYPES.FETCH_ERROR})
+                console.error(err);
+            })
+        const pinnedScores = await getScores(userId, 'pinned');
+        const firstsScores: any[] = [];
+        const bestScores = await getScores(userId, 'best');
+        const recentScores = await getScores(userId, 'recent')
+        if (!scores.error) {
+            scoresDispatch({
+                type: ACTION_TYPES.FETCH_SUCCESS,
+                payload: [pinnedScores, firstsScores, bestScores, recentScores]
+            })
         }
-    });
-    const getData = async () => {
-        setUserData([]);
-        searching = true;
-        const response = await fetch(`http://localhost:5000/usrInfo/${username}/${mode ? mode : propsMode}`);
-        const newData = await response.json();
-        setUserData([newData]);
-        getNewScores(newData.id).then(() => searching = false);
-        console.log(newData)
     };
 
-    async function getScores(thing: string, userId: number) {
-        const response = await fetch(`http://localhost:5000/usrScores/${userId}/${thing}/${mode ? mode : propsMode}`);
-        return await response.json();
+    const getScores = async (userId: number, thing: string) => {
+        return await fetch(`http://localhost:5000/usrScores/${userId}/${thing}/${mode}`)
+            .then(async (data) => {
+                return await data.json();
+            })
+            .catch((err) => {
+                console.error(err)
+                scoresDispatch({type: ACTION_TYPES.FETCH_ERROR});
+                return [];
+            });
+    }
+    const getUserId = (username: string) => {
+        fetch(`http://localhost:5000/getUserId/${username}`)
+            .then(async (data) => {
+                const userId = await data.json();
+                navigate(`/users/${userId.id}/${mode}`);
+            })
+            .catch((err) => {
+                console.error(err);
+            })
     }
 
-    const getNewScores = async (userId: number) => {
-        const newScores: scoresTypes = {
-            best: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            },
-            firsts: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            },
-            pinned: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            },
-            recent: {
-                items: [],
-                pagination: {
-                    hasMore: false
-                },
-                count: 0,
-            }
-        };
-        setUserScores(newScores);
-        newScores.pinned.items = await getScores('pinned', userId);
-        //newScores.firsts.items = await getScores('firsts', userId);
-        newScores.firsts.items = [];
-        newScores.best.items = await getScores('best', userId);
-        newScores.recent.items = await getScores('recent', userId);
-        setUserScores(newScores);
-    }
     useEffect(() => {
-        if (mode === propsMode) {
-            getData().then();
+        if (urlUsername) {
+            if (parseInt(urlUsername)) {
+                const modes = ['osu', 'taiko', 'fruits', 'mania'];
+                if (urlMode) {
+                    setMode(modes.includes(urlMode) ? urlMode : mode);
+                } else {
+                    setMode(mode);
+                }
+                getData(parseInt(urlUsername));
+            } else {
+                getUserId(urlUsername);
+            }
         }
-        sendUsername(userData[0]?.id ? userData[0].id.toString() : '');
-        username = userData[0]?.id ? userData[0].id.toString() : '';
-    }, [username, propsMode, mode]);
+    }, [urlUsername, urlMode]);
     return (
-        <div className="d-flex flex-column justify-content-center align-items-center">
-            <div className="shadow">
-                {searching ?
-                    (
-                        <div className="spinner-border" role="status">
-                        </div>
-                    ) : (userData.length > 0 ?
-                        (
-                            <UserCard data={userData[0]} volume={volume} mode={mode ? mode : propsMode}
-                                      medals={medals} scores={userScores}
-                                      username={userData[0].username ? userData[0].username : ''}
-                                      colors={colors}/>
-                        ) : '')}
-            </div>
+        <div className="row justify-content-center">
+            {user.loading || scores.loading ?
+                <div className="spinner-border text-light" role="status"></div>
+                : user.error || scores.error ?
+                    <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                        Error while trying to fetch data!
+                        <button type="button" className="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                    </div>
+                    : user.data && scores.data ?
+                        <UserCard data={user.data}
+                                  scores={scores.data}
+                                  medals={props.medals} />
+                        : ''}
         </div>
     );
 }

@@ -22,6 +22,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    ranks: {
+        xh: Number,
+        x: Number,
+        sh: Number,
+        s: Number,
+        a: Number,
+        b: Number,
+        c: Number,
+        d: Number,
+    },
     modes: {
         osu: {
             rankHistory: [rankSchema],
@@ -38,6 +48,43 @@ const userSchema = new mongoose.Schema({
         mania: {
             rankHistory: [rankSchema],
             countryRankHistory: [rankSchema]
+        }
+    },
+    setup: {
+        peripherals: {
+            monitor: String,
+            headphones: String,
+            microphone: String,
+            tablet: String,
+            mouse: String,
+            keyboard: String,
+            keypad: String,
+            mousepad: String,
+            chair: String,
+        },
+        tablet: {
+            drivers: String,
+            filters: [String],
+            maxArea: {
+                x: Number,
+                y: Number,
+            },
+            area: {
+                x: Number,
+                y: Number,
+                offsetX: Number,
+                offsetY: Number,
+            }
+        },
+        keyboard: {
+            format: {
+                type: String,
+                enum: ['2', '3', '4', '60', '75', 'tkl', 'full']
+            },
+            inputs: [String]
+        },
+        mouse: {
+            dpi: Number
         }
     }
 })

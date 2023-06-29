@@ -14,10 +14,7 @@ export interface User {
     username: string;
     cover_url: string;
     discord: string;
-    db_rank_history: {
-        global_rank: [{ date: Date, rank: number }],
-        country_rank: [{ date: Date, rank: number }]
-    },
+    db_info: DbInfo;
     has_supported: boolean;
     interests: string;
     join_date: string;
@@ -28,9 +25,9 @@ export interface User {
     max_friends: number;
     occupation: string;
     playmode: string;
-    playstyle: (string)[];
+    playstyle?: string[];
     post_count: number;
-    profile_order: (string)[];
+    profile_order: string[];
     title: string;
     twitter: string;
     website: string;
@@ -39,24 +36,93 @@ export interface User {
     is_restricted: boolean;
     account_history: any;
     active_tournament_banner: any;
-    badges: (BadgesEntity)[];
+    badges: BadgesEntity[];
     favourite_beatmapset_count: number;
     follower_count: number;
     graveyard_beatmapset_count: number;
-    groups: (GroupsEntity)[];
+    groups: GroupsEntity[];
     loved_beatmapset_count: number;
-    monthly_playcounts: (MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity)[];
+    monthly_playcounts: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity[];
     page: Page;
     pending_beatmapset_count: number;
     previous_usernames: any;
     ranked_beatmapset_count: number;
-    replays_watched_counts: (MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity)[];
+    replays_watched_counts: MonthlyPlaycountsEntityOrReplaysWatchedCountsEntity[];
     scores_first_count: number;
     statistics: Statistics;
     support_level: number;
-    user_achievements: (UserAchievementsEntity)[];
+    user_achievements: UserAchievementsEntity[];
     rank_history: RankHistory;
 }
+
+export interface DbInfo {
+    global_rank: RankHistory[];
+    country_rank: RankHistory[];
+    setup?: Setup,
+    ranks: {
+        xh: number,
+        x: number,
+        sh: number,
+        s: number,
+        a: number,
+        b: number,
+        c: number,
+        d: number,
+    },
+}
+
+export interface RankHistory {
+    date: Date,
+    rank: number
+}
+
+export interface Setup {
+    peripherals?: Peripherals;
+    tablet?: Tablet;
+    keyboard?: Keyboard;
+    mouse?: Mouse
+}
+
+export interface Mouse {
+    dpi?: number;
+}
+
+export interface Peripherals {
+    monitor?: string;
+    headphones?: string;
+    microphone?: string;
+    tablet?: string;
+    mouse?: string;
+    keyboard?: string;
+    keypad?: string;
+    mousepad?: string;
+    chair?: string;
+}
+
+export interface Tablet {
+    maxArea: MaxArea;
+    area: Area;
+    drivers: string;
+    filters: string[];
+}
+
+export interface MaxArea {
+    x: number;
+    y: number;
+}
+
+export interface Area {
+    x: number;
+    y: number;
+    offsetX: number;
+    offsetY: number;
+}
+
+export interface Keyboard {
+    format: string;
+    inputs: string[];
+}
+
 
 export interface Kudosu {
     total: number;
@@ -142,37 +208,7 @@ export interface UserAchievementsEntity {
 
 export interface RankHistory {
     mode: string;
-    data: (number)[];
-}
-
-export interface userScoreSmall {
-    position: number;
-    score: ScoreInterface;
-}
-
-export interface ScoreInterface {
-    accuracy: number;
-    best_id: number;
-    created_at: string;
-    id: number;
-    max_combo: number;
-    mode: string;
-    mode_int: number;
-    mods: string[];
-    passed: boolean;
-    perfect: boolean;
-    pp: number;
-    rank: string;
-    replay: boolean;
-    score: number;
-    statistics: Statistics;
-    type: string;
-    user_id: number;
-    current_user_attributes: CurrentUserAttributes;
-    beatmap: Beatmap;
-    beatmapset: Beatmapset;
-    user: UserBeatmap;
-    weight: Weight;
+    data: number[];
 }
 
 export interface Statistics {
@@ -182,92 +218,4 @@ export interface Statistics {
     count_geki: number;
     count_katu: number;
     count_miss: number;
-}
-
-export interface CurrentUserAttributes {
-    pin: boolean;
-}
-
-export interface Beatmap {
-    beatmapset_id: number;
-    difficulty_rating: number;
-    id: number;
-    mode: string;
-    status: string;
-    total_length: number;
-    user_id: number;
-    version: string;
-    accuracy: number;
-    ar: number;
-    bpm: number;
-    convert: boolean;
-    count_circles: number;
-    count_sliders: number;
-    count_spinners: number;
-    cs: number;
-    deleted_at: string;
-    drain: number;
-    hit_length: number;
-    is_scoreable: boolean;
-    last_updated: string;
-    mode_int: number;
-    passcount: number;
-    playcount: number;
-    ranked: number;
-    url: string;
-    checksum: string;
-}
-
-export interface Beatmapset {
-    artist: string;
-    artist_unicode: string;
-    covers: Covers;
-    creator: string;
-    favourite_count: number;
-    hype: number;
-    id: number;
-    nsfw: boolean;
-    offset: number;
-    play_count: number;
-    preview_url: string;
-    source: string;
-    spotlight: boolean;
-    status: string;
-    title: string;
-    title_unicode: string;
-    track_id: number;
-    user_id: number;
-    video: boolean;
-}
-
-export interface Covers {
-    cover: string;
-    "cover@2x": string;
-    card: string;
-    "card@2x": string;
-    list: string;
-    "list@2x": string;
-    slimcover: string;
-    "slimcover@2x": string;
-}
-
-export interface UserBeatmap {
-    avatar_url: string;
-    country_code: string;
-    default_group: string;
-    id: number;
-    is_active: boolean;
-    is_bot: boolean;
-    is_deleted: boolean;
-    is_online: boolean;
-    is_supporter: boolean;
-    last_visit: string;
-    pm_friends_only: boolean;
-    profile_colour: string;
-    username: string;
-}
-
-export interface Weight {
-    percentage: number;
-    pp: number;
 }

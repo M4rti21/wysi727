@@ -1,11 +1,11 @@
-export interface scoresTypes {
+export interface ScoresType {
     best: Best;
     firsts: Firsts;
     pinned: Pinned;
     recent: Pinned;
 }
 export interface Best {
-    items: (ItemsEntity)[];
+    items: ItemsEntity[];
     pagination: Pagination;
     count: number;
 }
@@ -15,7 +15,7 @@ export interface ItemsEntity {
     ended_at: string;
     max_combo: number;
     maximum_statistics: MaximumStatistics;
-    mods: (ModsEntity)[];
+    mods: ModsEntity[];
     passed: boolean;
     rank: string;
     ruleset_id: number;
@@ -142,7 +142,7 @@ export interface ItemsEntity1 {
     ended_at: string;
     max_combo: number;
     maximum_statistics: MaximumStatistics;
-    mods: (ModsEntity1)[];
+    mods: ModsEntity1[];
     passed: boolean;
     rank: string;
     ruleset_id: number;
@@ -185,7 +185,7 @@ export interface Beatmapset1 {
     video: boolean;
 }
 export interface Pinned {
-    items: (ItemsEntity2)[];
+    items: ItemsEntity2[];
     pagination: Pagination;
     count: number;
 }
@@ -195,7 +195,7 @@ export interface ItemsEntity2 {
     ended_at: string;
     max_combo: number;
     maximum_statistics: MaximumStatistics;
-    mods: (ModsEntity)[];
+    mods: ModsEntity[];
     passed: boolean;
     rank: string;
     ruleset_id: number;

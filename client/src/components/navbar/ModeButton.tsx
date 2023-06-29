@@ -1,54 +1,55 @@
-import React, {useState} from 'react';
-import {useNavigate} from "react-router-dom";
+import React from 'react';
+import {modeSettings, ModeSettingsType} from "../../store/store";
+import {useParams, useNavigate} from 'react-router-dom';
+import {IconButton} from '@mui/material';
 
-interface ChildButtonProps {
-    mode: string;
-    username: string;
-    onModeChange: (newVolume: string) => void;
-}
-
-const VolumeSlider: React.FC<ChildButtonProps> = ({mode, onModeChange, username}) => {
+const VolumeSlider = () => {
     const navigate = useNavigate();
+    const {urlUsername} = useParams();
+
+    const mode = modeSettings((state: ModeSettingsType) => state.mode);
+    const setMode = modeSettings((state: ModeSettingsType) => state.setMode);
     const handleChange = (modeName: string) => {
-        onModeChange(modeName);
-        setShowModes(!showModes);
-        if (username !== '') {
-            navigate(`/users/${username}/${modeName}`)
+        setMode(modeName);
+        console.log(urlUsername)
+        if (urlUsername) {
+            const newPath = `/users/${urlUsername}/${mode}`;
+            navigate(newPath);
         }
     };
-    const [showModes, setShowModes] = useState<boolean>(false);
     return (
-        <div className="d-flex flex-row align-items-center m-0 p-0 btn-group">
-            <button className="btn btn-dark d-flex justify-content-center align-items-center" onClick={() => {
-                setShowModes(!showModes);
-            }} data-bs-toggle="button">
-                <img className="mode-icon" src={require(`../../assets/mode-icons/${mode}.svg`)} alt="ico"/>
-            </button>
-            {showModes ?
-                <>
-                    <button className="btn btn-dark d-flex justify-content-center align-items-center"
+        <>
+            <div className="d-flex flex-column align-items-center gap-2 hover-button">
+                <IconButton>
+                    <img className="mode-icon" src={require(`../../assets/mode-icons/${mode}.svg`)} alt="ico"/>
+                </IconButton>
+                <div className="hover-container p-2 rounded" style={{backgroundColor: '#121212'}}>
+                    <div className="d-flex flex-column align-items-center">
+                        <IconButton
+                            color="primary"
                             disabled={mode === 'osu'}
                             onClick={() => handleChange('osu')}>
-                        <img className="mode-icon" src={require(`../../assets/mode-icons/osu.svg`).default} alt="ico"/>
-                    </button>
-                    <button className="btn btn-dark d-flex justify-content-center align-items-center"
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/osu.svg`).default} alt="ico"/>
+                        </IconButton>
+                        <IconButton
                             disabled={mode === 'taiko'}
                             onClick={() => handleChange('taiko')}>
-                        <img className="mode-icon" src={require(`../../assets/mode-icons/taiko.svg`).default} alt="ico"/>
-                    </button>
-                    <button className="btn btn-dark d-flex justify-content-center align-items-center"
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/taiko.svg`).default} alt="ico"/>
+                        </IconButton>
+                        <IconButton
                             disabled={mode === 'fruits'}
                             onClick={() => handleChange('fruits')}>
-                        <img className="mode-icon" src={require(`../../assets/mode-icons/fruits.svg`).default} alt="ico"/>
-                    </button>
-                    <button className="btn btn-dark d-flex justify-content-center align-items-center"
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/fruits.svg`).default} alt="ico"/>
+                        </IconButton>
+                        <IconButton
                             disabled={mode === 'mania'}
                             onClick={() => handleChange('mania')}>
-                        <img className="mode-icon" src={require(`../../assets/mode-icons/mania.svg`).default} alt="ico"/>
-                    </button>
-                </>
-                : ''}
-        </div>
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/mania.svg`).default} alt="ico"/>
+                        </IconButton>
+                    </div>
+                </div>
+            </div>
+        </>
     );
 };
 

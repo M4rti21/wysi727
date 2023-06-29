@@ -1,11 +1,12 @@
 import React, {useState} from "react";
 import {useNavigate} from 'react-router-dom';
+import {modeSettings, ModeSettingsType} from "../../store/store";
+import {IconButton, InputBase, Paper, TextField} from "@mui/material";
+import SearchIcon from '@mui/icons-material/Search';
+import ModeButton from "./ModeButton";
 
-interface InputProps {
-    mode: string,
-}
-
-const SearchInput = (props: InputProps) => {
+const SearchInput = () => {
+    const mode = modeSettings((state: ModeSettingsType) => state.mode);
     const navigate = useNavigate();
     const [data, setData] = useState('');
     const handleChange = (e: any) => {
@@ -14,24 +15,23 @@ const SearchInput = (props: InputProps) => {
     }
     const handleSubmit = (e: any) => {
         e.preventDefault();
-        console.log("this works")
-        navigate(`/users/${data}/${props.mode}`);
+        console.log(data)
+        if (data !== '') {
+            navigate(`/users/${data}/${mode}`);
+        }
         setData('');
     }
     return (
-        <form className="flex-grow-1 d-flex flex-row gap-2 align-items-center justify-content-between p-0 m-0"
-              onSubmit={handleSubmit}>
-            <input type="text"
-                   className="text-light flex-grow-1 me-auto"
-                   style={{
-                       outline: 0,
-                       borderWidth: "0 0 1px",
-                       backgroundColor: "#00000000",
-                       borderColor: "#ffffff",
-                   }}
-                   placeholder="Your Username" value={data}
-                   onChange={handleChange}/>
-            <button className="btn btn-dark ms-auto"><i className="bi bi-search"></i></button>
+        <form onSubmit={handleSubmit}
+              className={"d-flex flex-row"}>
+            <InputBase
+                sx={{ml: 1, flex: 1}}
+                placeholder="Username"
+                onChange={handleChange} value={data}
+            />
+            <IconButton type="submit" disabled={data === ''}>
+                <SearchIcon/>
+            </IconButton>
         </form>
     );
 }

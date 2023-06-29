@@ -7,14 +7,17 @@ import 'bootstrap/dist/js/bootstrap.min';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'react-tooltip/dist/react-tooltip.css'
+import {Tooltip as ReactTooltip} from "react-tooltip";
+import {ParallaxProvider} from "react-scroll-parallax";
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );
 root.render(
-    <React.StrictMode>
-        <BrowserRouter>
+    <BrowserRouter>
+        <ParallaxProvider>
+            <ReactTooltip id="reactTooltip" style={{zIndex: 100}}/>
             <App/>
-        </BrowserRouter>
-    </React.StrictMode>
+        </ParallaxProvider>
+    </BrowserRouter>
 );

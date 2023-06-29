@@ -4,6 +4,14 @@
     --col-accent: #7e7e7e;
     --btn-primary: #979797;
     --btn-secondary: #080808;
+    --nav-primary: #080808;
+}
+
+@font-face {
+    font-family: "IBMPlexSansJP";
+    src: url('./fonts/IBMPlexSansJP-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
 }
 
 @font-face {
@@ -34,9 +42,36 @@
     font-weight: bold;
 }
 
-body, html, main {
+@font-face {
+    font-family: "Aller";
+    src: url('./fonts/Aller_Rg.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "Arial Rounded";
+    src: url('./fonts/Arial-Rounded.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "DM Sans";
+    src: url('./fonts/DMSans-Regular.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+body, html {
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
+}
+
+main {
+    height: calc(100vh - 52px);
+    overflow-x: hidden;
 }
 
 body {
@@ -45,17 +80,21 @@ body {
     width: 100vw;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
+* {
+    font-family: "Torus Pro", sans-serif !important;
+    font-weight: normal !important;
+    text-decoration: none !important;
+    border-collapse: separate !important;
 }
 
-* {
-    font-family: "Torus Pro", sans-serif;
-    font-weight: normal;
-    text-decoration: none;
-    border-collapse: separate;
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+nav {
+    background-color: var(--nav-primary);
 }
 
 .navBar > * {
@@ -94,7 +133,9 @@ a:hover {
 * {
     scrollbar-width: thin; /* For Firefox */
     scrollbar-color: #ffffff #141414; /* For Firefox */
-    box-sizing: border-box;
+    box-sizing: border-box !important;
+    -moz-box-sizing: border-box !important;
+    -webkit-box-sizing: border-box !important;
 }
 
 *::-webkit-scrollbar {
@@ -124,8 +165,16 @@ a:hover {
     cursor: help;
 }
 
-.volume-slider-container {
+.hover-container {
     display: none;
+    position: absolute;
+    top: 40px;
+    transform: translateY(-100%);
+    transition: transform 0.5s ease;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
 }
 
 .volume-slider {
@@ -137,8 +186,9 @@ a:hover {
     cursor: pointer;
 }
 
-.volume-button:hover .volume-slider-container {
-    display: block;
+.hover-button:hover .hover-container {
+    display: flex;
+    transform: translateY(0);
 }
 
 .volume-slider::-webkit-slider-thumb {
@@ -209,10 +259,41 @@ a:hover {
 }
 
 .shadow {
-    box-shadow: 0 1rem 1rem rgb(0,0,0) !important;
+    box-shadow: 0 1rem 1rem rgb(0, 0, 0) !important;
 }
 
 button {
     outline: none !important;
     border: none !important;
+}
+
+.dropdown-toggle::after, .dropdown-toggle::before {
+    display: none !important;
+}
+
+hr {
+    background-color: #ffffff44;
+}
+
+.modal-backdrop {
+    z-index: 50 !important;
+    display: none ;
+}
+
+
+.modal {
+    z-index: 1000;
+}
+
+#reactTooltip {
+    overflow: hidden;
+}
+
+button:disabled {
+    opacity: 0.5 !important;
+    transition: transform 0.5s ease;
+}
+
+button {
+    transition: transform 0.5s ease;
 }

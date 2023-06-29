@@ -12,17 +12,33 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/core": "^0.6.0",
+    "axios": "^1.4.0",
     "body-parser": "^1.20.2",
+    "connect-mongo": "^5.0.0",
+    "connect-mongodb-session": "^3.1.1",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "cross-fetch": "^3.1.5",
+    "crypto": "^1.0.1",
+    "discord.js": "^14.11.0",
+    "domcolor": "^1.0.1",
+    "dominant-color": "^0.0.1",
+    "dotenv": "^16.3.0",
+    "eris": "^0.17.2",
     "express": "^4.18.2",
+    "express-session": "^1.17.3",
     "fetch": "^1.1.0",
     "fs": "^0.0.1-security",
-    "mongoose": "^7.2.2",
+    "mongodb": "^5.6.0",
+    "node-fetch": "^3.3.1",
+    "passport-jwt": "^4.0.1",
     "path": "^0.12.7",
-    "react-scroll-parallax": "^3.4.2"
+    "react-scroll-parallax": "^3.4.2",
+    "sharp": "^0.32.1"
   },
   "devDependencies": {
+    "mongoose": "^7.2.4",
     "nodemon": "^2.0.22"
   }
 }

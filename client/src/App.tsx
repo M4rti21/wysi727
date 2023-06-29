@@ -1,168 +1,128 @@
 import React, {useEffect, useState} from 'react';
-import {Routes, Route} from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import Navbar from "./components/navbar/Navbar";
 import Home from "./views/Home";
 import Users from "./views/Users";
-import {ParallaxProvider} from "react-scroll-parallax";
-import {MedalInterface, UserMedalsInterface} from "./interfaces/MedalsInterface";
-import {Tooltip as ReactTooltip} from "react-tooltip";
-import {ColorsType} from "./interfaces/ColorsInterface";
+import RedirectHandler from "./RedirectHandler";
+import {userSettings, UserSettingsType} from "./store/store";
+import axios from 'axios';
+import {MedalInterface} from "./interfaces/MedalsInterface";
+import {ThemeProvider, createTheme} from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import DevelopBanner from "./components/navbar/DevelopBanner";
 
+const darkTheme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            light: '#ffffff',
+            main: '#ffffff',
+            dark: '#000000',
+            contrastText: '#000000',
+        },
+    },
+    components: {
+        MuiSlider: {
+            styleOverrides: {
+                root: {
+                    height: 2,
+                    padding: '15px 0',
+                    backgroundColor: '#555555',
+                },
+                rail: {
+                    height: 2,
+                    opacity: 0.5,
+                    backgroundColor: '#555555',
+                },
+                track: {
+                    height: 2,
+                },
+                thumb: {
+                    display: 'block',
+                    height: 14,
+                    width: 14
+                },
+                mark: {
+                    display: 'none',
+                },
+            },
+        },
+    },
+});
 const App = () => {
-    const [volume, setVolume] = useState<number>(50);
-    const [mode, setMode] = useState<string>('osu');
-    const [username, setUsername] = useState<string>('');
-    const [colors, setcolors] = useState<ColorsType>(
-        {
-            ui: {
-                font: '#f5f5f5',
-                background: '#212529',
-                main: '#000000'
-            },
-            judgements: {
-                x300: '#35d4fb',
-                x100: '#6cf128',
-                x50: '#fbc435',
-                xMiss: '#fc0606',
-            },
-            ranks: {
-                xh: '#ffffff',
-                x: '#fbc435',
-                sh: '#cccccc',
-                s: '#c89102',
-                a: '#6cf128',
-                b: '#066cf1',
-                c: '#b014dc',
-                d: '#e00414',
-                f: '#aaaaaa'
-            },
-            charts: {
-                lvl: '#fbc435',
-                skills: '#b64757',
-                global: '#fbc435',
-                country: '#fbc435',
-                plays: '#fbc435',
-                topPp: '#35d4fb'
-            }
-        }
-    );
-    const handleVolumeChange = (newVolume: number) => {
-        setVolume(newVolume);
-    };
-    const handleModeChange = (newMode: string) => {
-        setMode(newMode);
-    };
-    // const [bgs, setBgs] = useState<string[]>([]);
-    const [medals, setMedals] = useState<UserMedalsInterface>(
-        {
-            medalBeatmapSpotlights: [],
-            medalBeatmapChallenges: [],
-            medalBeatmapPacks: [],
-            medalHushHush: [],
-            medalSkills: [],
-            modIntroduction: [],
-        }
-    );
-    const handleColorChange = (colorBg: string, colorFont: string, colorSkills: string, colorLine: string, colorPP: string) => {
-        colors.ui.background = colorBg;
-        colors.ui.font = colorFont;
-        colors.charts.global = colorLine;
-        colors.charts.country = colorLine;
-        colors.charts.plays = colorLine;
-        colors.charts.topPp = colorPP;
-        setcolors({
-            ui: {
-                font: colorFont,
-                background: colorBg,
-                main: '#000000',
-            },
-            judgements: {
-                x300: '#35d4fb',
-                x100: '#6cf128',
-                x50: '#fbc435',
-                xMiss: '#fc0606',
-            },
-            ranks: {
-                xh: '#ffffff',
-                x: '#fbc435',
-                sh: '#cccccc',
-                s: '#c89102',
-                a: '#6cf128',
-                b: '#066cf1',
-                c: '#b014dc',
-                d: '#e00414',
-                f: '#aaaaaa'
-            },
-            charts: {
-                lvl: colorSkills,
-                skills: colorSkills,
-                global: colorLine,
-                country: colorLine,
-                plays: colorLine,
-                topPp: colorPP
-            }
-        })
-    };
-    // const [currentBg, setCurrentBg] = useState<number>(0)
-    // const getBgs = async () => {
-    //     const response = await fetch(`http://localhost:5000/getBG`);
-    //     const data = await response.json();
-    //     if (data?.length) {
-    //         setBgs(data.backgrounds.map((bg: any) => {
-    //             return bg.url;
-    //         }));
-    //         setCurrentBg(Math.floor(Math.random() * data.backgrounds.length));
-    //     }
-    // }
+    axios.defaults.withCredentials = true;
+    const logged = userSettings((state: UserSettingsType) => state.logged);
+    const setUser = userSettings((state: UserSettingsType) => state.setUser);
+    const [medals, setMedals] = useState<{ [key: string]: MedalInterface[] }>({});
     const getMedals = async () => {
         const response = await fetch(`http://localhost:5000/getMedals`);
         const data = await response.json();
-        setMedals({
-            medalBeatmapSpotlights: data.filter((medal: MedalInterface) => medal.Grouping === "Beatmap Spotlights").sort((a: MedalInterface, b: MedalInterface) => (new Date(a.Date).getTime()) - (new Date(b.Date).getTime())),
-            medalBeatmapChallenges: data.filter((medal: MedalInterface) => medal.Grouping === "Beatmap Challenge Packs").sort((a: MedalInterface, b: MedalInterface) => (new Date(a.Date).getTime()) - (new Date(b.Date).getTime())),
-            medalBeatmapPacks: data.filter((medal: MedalInterface) => medal.Grouping === "Beatmap Packs").sort((a: MedalInterface, b: MedalInterface) => (new Date(a.Date).getTime()) - (new Date(b.Date).getTime())),
-            medalHushHush: data.filter((medal: MedalInterface) => medal.Grouping === "Hush-Hush" || medal.Grouping === "Hush-Hush (Expert)").sort((a: MedalInterface, b: MedalInterface) => (new Date(a.Date).getTime()) - (new Date(b.Date).getTime())),
-            medalSkills: data.filter((medal: MedalInterface) => medal.Grouping === "Skill & Dedication").sort((a: MedalInterface, b: MedalInterface) => (new Date(a.Date).getTime()) - (new Date(b.Date).getTime())),
-            modIntroduction: data.filter((medal: MedalInterface) => medal.Grouping === "Mod Introduction").sort((a: MedalInterface, b: MedalInterface) => (new Date(a.Date).getTime()) - (new Date(b.Date).getTime())),
+        data.sort((a: any, b: any) => {
+            if (a.Grouping === b.Grouping) {
+                return parseInt(a.value, 10) - parseInt(b.value, 10);
+            }
+            return a.Grouping.localeCompare(b.Grouping);
         });
-        console.log(data)
+        const categoryArrays: { [key: string]: MedalInterface[] } = {};
+        for (const obj of data) {
+            if (categoryArrays[obj.Grouping]) {
+                // Category array already exists, push the object to it
+                categoryArrays[obj.Grouping].push(obj);
+            } else {
+                // Category array doesn't exist, create a new array with the object
+                categoryArrays[obj.Grouping] = [obj];
+            }
+        }
+        setMedals(categoryArrays);
     }
-    const updateUsername = (currUser: string) => {
-        setUsername(currUser);
-    }
+    const checkLoggedIn = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/login', {
+                credentials: 'include' // Include cookies in the request
+            });
+            if (response.ok) {
+                const userData = await response.json();
+                console.log(userData)
+                setUser(userData); // Store the user data in state
+            }
+        } catch (error) {
+            console.error('Error checking user authentication:', error);
+        }
+    };
     useEffect(() => {
-        // getBgs().then();
         getMedals().then();
-        // setTimeout(() => {
-        //     setCurrentBg(Math.round(Math.random() * bgs.length))
-        // }, 300000)
+        if (!logged) {
+            checkLoggedIn().then()
+        }
     }, []);
     return (
-        <div style={{height: "100vh", width: "100vw", overflow: "hidden"}}>
-            <ReactTooltip id="reactTooltip" style={{zIndex: 20}}/>
-            <Navbar onVolumeChange={handleVolumeChange} onModeChange={handleModeChange} mode={mode}
-                    username={username} onColorChange={handleColorChange}/>
-            <main className="d-flex flex-column" style={
-                {
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    // backgroundImage: `url(${bgs[currentBg]})`,
-                    backgroundImage: `url(${require('./assets/bg.svg').default})`,
-                    height: 'calc(100vh - 53.6px)',
-                    width: '100%',
-                    overflowY: "scroll",
-                    overflowX: "hidden"
-                }}>
-                <ParallaxProvider>
+        <> <ThemeProvider theme={darkTheme}>
+            <CssBaseline/>
+            <Navbar/>
+            <DevelopBanner develop={false}/>
+            <div style={{
+                backgroundImage: `url(${require('./assets/bg.svg').default})`,
+                backgroundSize: "cover",
+                width: "100vw",
+                overflowY: "scroll"
+            }}>
+                <main className="d-flex flex-column" style={
+                    {
+                        width: '100%',
+                        backdropFilter: "blur(1px)",
+                        overflowY: "scroll",
+                        marginTop: 56
+                    }}>
                     <Routes>
+                        <Route path="/oauth-redirect" element={<RedirectHandler/>}/>
                         <Route path="/" element={<Home/>}/>
-                        <Route path="/users/:username/:mode?"
-                               element={<Users volume={volume} medals={medals} propsMode={mode}
-                                               sendUsername={updateUsername} colors={colors}/>}/>
+                        <Route path="/users/:urlUsername?/:urlMode?"
+                               element={<Users medals={medals}/>}/>
                     </Routes>
-                </ParallaxProvider>
-            </main>
-        </div>
+                </main>
+            </div>
+        </ThemeProvider>
+        </>
     );
 }
 export default App;

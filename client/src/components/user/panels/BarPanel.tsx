@@ -1,19 +1,19 @@
 import React from "react";
-import {ColorsType} from "../../../interfaces/ColorsInterface";
 import FlagEmoji from "../FlagEmoji";
+import {ColorSettingsType, colorsSettings} from "../../../store/store";
 
 interface propsInterface {
     data: any;
-    colors: ColorsType,
 }
 
 const BarPanel = (props: propsInterface) => {
+    const colors = colorsSettings((state: ColorSettingsType) => state.colors);
     return (
         <>
-            <div className="d-flex flex-row flex-wrap gap-3 align-items-center p-3" style={{
+            <div className="d-flex flex-row flex-wrap gap-3 align-items-center py-3 px-4" style={{
                 marginBottom: -68,
-                zIndex: 5,
-                backgroundColor: props.colors.ui.background,
+                zIndex: 10,
+                backgroundColor: colors.ui.bg,
             }}>
                 <div>
                     <i className="bi bi-people-fill me-2"></i> Followers: {props.data.follower_count}
@@ -37,11 +37,11 @@ const BarPanel = (props: propsInterface) => {
                     <i className="bi bi-buildings-fill me-2"></i>{props.data.occupation}
                 </div>
             </div>
-            <div className="m-0 p-0 col-12 shadow p-3 d-flex flex-row flex-wrap gap-3 align-items-center"
+            <div className="m-0 p-0 col-12 shadow py-3 px-4 d-flex flex-row flex-wrap gap-3 align-items-center"
                  style={{
                      position: "sticky",
                      top: -1,
-                     backgroundColor: props.colors.ui.background,
+                     backgroundColor: colors.ui.bg,
                      zIndex: 4
                  }}>
                 <div className="d-flex flex-row flex-wrap gap-3 align-items-center">
@@ -54,15 +54,15 @@ const BarPanel = (props: propsInterface) => {
                              width: 36
                          }}>
                     </div>
-                    <div className={"fs-5"}>{props.data.username}</div>
-                    <div>{props.data.statistics.global_rank ?
+                    <a className={"fs-5 text-decoration-none"} style={{color: colors.ui.font}} href={`https://osu?.ppy.sh/users/${props.data.id}`} target="_blank">{props.data.username}</a>
+                    <div>{props.data.statistics?.global_rank ?
                         <>
                             <div className="d-flex flex-row align-items-center">
-                                <i className="bi bi-globe2 me-2"></i>#{props.data.statistics.global_rank?.toLocaleString()}
+                                <i className="bi bi-globe2 me-2"></i>#{props.data.statistics?.global_rank?.toLocaleString()}
                             </div>
                         </>
                         : ''}</div>
-                    <div>{props.data.statistics.country_rank ?
+                    <div>{props.data.statistics?.country_rank ?
                         <>
                             <div className="d-flex flex-row align-items-center">
                                 <div className="d-flex flex-row align-items-center">
@@ -78,13 +78,13 @@ const BarPanel = (props: propsInterface) => {
                         : ''}
                     </div>
                     <div>
-                        {Math.round(props.data.statistics.pp)?.toLocaleString()}pp
+                        {Math.round(props.data.statistics?.pp)?.toLocaleString()}pp
                     </div>
                     <div>
-                        {props.data.statistics.hit_accuracy.toFixed(2)}%
+                        {props.data.statistics?.hit_accuracy.toFixed(2)}%
                     </div>
                     <div>
-                        {Math.round(props.data.statistics.play_time / 60 / 60)}h
+                        {Math.round(props.data.statistics?.play_time / 60 / 60)}h
                     </div>
                     <div>
                         <i className="bi bi-discord me-2"></i>{props.data.discord}

@@ -18,12 +18,3 @@ export interface MedalInterface {
     Ordering: string;
     Rarity: string;
 }
-
-export interface UserMedalsInterface {
-    medalBeatmapSpotlights: MedalInterface[],
-    medalBeatmapChallenges: MedalInterface[],
-    medalBeatmapPacks: MedalInterface[],
-    medalHushHush: MedalInterface[],
-    medalSkills: MedalInterface[],
-    modIntroduction: MedalInterface[],
-}
