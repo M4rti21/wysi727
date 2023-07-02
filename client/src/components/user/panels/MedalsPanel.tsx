@@ -1,6 +1,7 @@
 import React from "react";
 import Medal from "../Medal";
 import {ColorSettingsType, colorsSettings, modeSettings, ModeSettingsType} from "../../../store/store";
+import {ActiveLanguageType, languageStore} from "../../../store/languages";
 
 interface propsInterface {
     medals: any;
@@ -9,6 +10,7 @@ interface propsInterface {
 }
 
 const MedalsPanel = (props: propsInterface) => {
+    const language = languageStore((state: ActiveLanguageType) => state.text);
     const colors = colorsSettings((state: ColorSettingsType) => state.colors);
     const mode = modeSettings((state: ModeSettingsType) => state.mode);
     let combinedLength = 0;
@@ -44,9 +46,7 @@ const MedalsPanel = (props: propsInterface) => {
                             </svg>
                         </div>
                     </a>
-                    <div>
-                        Medals:
-                    </div>
+                    <div>{language.user.top.medals}:</div>
                 </div>
                 <div className={"ms-auto"}>
                     ({props.userMedals?.length}/{combinedLength})

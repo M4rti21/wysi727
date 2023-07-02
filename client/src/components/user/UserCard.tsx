@@ -21,14 +21,22 @@ import {
 } from 'chart.js'
 import 'chartjs-adapter-date-fns';
 import {registerables} from 'chart.js';
-import {ScoresType} from "../../interfaces/ScoresInterface";
+import {ItemsEntity, ScoresType} from "../../interfaces/ScoresInterface";
 import 'chartjs-adapter-moment';
 import BarPanel from "./panels/BarPanel";
 import TopPanel from "./panels/TopPanel";
 import MedalsPanel from "./panels/MedalsPanel";
 import SetupPanel from "./panels/SetupPanel";
-import {ColorSettingsType, colorsSettings} from "../../store/store";
+import {ColorSettingsType, colorsSettings, modeSettings, ModeSettingsType} from "../../store/store";
 import {MedalInterface} from "../../interfaces/MedalsInterface";
+import {Tab, Tabs} from "@mui/material";
+import WatchLaterIcon from '@mui/icons-material/WatchLater';
+import StarIcon from '@mui/icons-material/Star';
+import PushPinIcon from '@mui/icons-material/PushPin';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import {ActiveLanguageType, languageStore} from "../../store/languages";
+import Divider from '@mui/material/Divider';
+
 
 Chart.register(ArcElement, PointElement, CategoryScale, LinearScale, LineController, LineElement, Title, Tooltip, RadarController, RadialLinearScale, Filler, zoomPlugin);
 Chart.register(...registerables);
@@ -44,8 +52,14 @@ type ModeSnap = "x" | "y" | "nearest" | "index" | "dataset" | "point" | undefine
 type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
 type AxisType = "time" | undefined;
 const UserCard = (props: userData) => {
+    const language = languageStore((state: ActiveLanguageType) => state.text);
     const colors = colorsSettings((state: ColorSettingsType) => state.colors);
-    const [activeScores, setActiveScores] = useState<string>('');
+    const mode = modeSettings((state: ModeSettingsType) => state.mode);
+
+    Chart.defaults.font.family = "IBMPlexSans";
+    Chart.defaults.plugins.legend.display = false;
+    Chart.defaults.color = colors.ui.font;
+
     const [firstCountryLog, setFirstCountryLog] = useState<string>('');
     const countryLog = () => {
         if (props.data?.db_info?.country_rank[0]) {
@@ -70,16 +84,52 @@ const UserCard = (props: userData) => {
     }
     const playtime = secondsToDHMS(props.data.statistics?.play_time);
     const avgPlayTime = secondsToDHMS(props.data.statistics?.play_time / props.data.statistics?.play_count);
-    Chart.defaults.font.family = "Torus Pro";
-    Chart.defaults.plugins.legend.display = false;
-    Chart.defaults.color = colors.ui.font;
+    let scoresHits = {
+        x320: 0,
+        x300: 0,
+        x200: 0,
+        x100: 0,
+        x50: 0,
+        xMiss: 0,
+    }
+    let scoresRanks = {
+        xh: 0,
+        x: 0,
+        sh: 0,
+        s: 0,
+        a: 0,
+        b: 0,
+        c: 0,
+        d: 0,
+    }
+    setScoresHits();
+    setScoresRanks();
     const hitData = {
-        labels: ['300', '100', '50', 'Miss'],
+        labels: ['320', '300', '200', '100', '50', 'X'],
         datasets: [
             {
-                data: [props.data.statistics?.count_300, props.data.statistics?.count_100, props.data.statistics?.count_50, props.data.statistics?.count_miss],
-                backgroundColor: [colors.judgements.x300, colors.judgements.x100, colors.judgements.x50, colors.judgements.xMiss],
-                hoverBackgroundColor: [colors.judgements.x300 + 'cc', colors.judgements.x100 + 'cc', colors.judgements.x50 + 'cc', colors.judgements.xMiss + 'cc'],
+                data: [
+                    scoresHits.x320,
+                    scoresHits.x300,
+                    scoresHits.x200,
+                    scoresHits.x100,
+                    scoresHits.x50,
+                    scoresHits.xMiss,
+                ],
+                backgroundColor: [
+                    colors.judgements.x320,
+                    colors.judgements.x300,
+                    colors.judgements.x200,
+                    colors.judgements.x100,
+                    colors.judgements.x50,
+                    colors.judgements.xMiss],
+                hoverBackgroundColor: [
+                    colors.judgements.x320 + 'cc',
+                    colors.judgements.x300 + 'cc',
+                    colors.judgements.x200 + 'cc',
+                    colors.judgements.x100 + 'cc',
+                    colors.judgements.x50 + 'cc',
+                    colors.judgements.xMiss + 'cc'],
             },
         ],
     };
@@ -88,14 +138,14 @@ const UserCard = (props: userData) => {
         datasets: [
             {
                 data: [
-                    props.data.statistics?.grade_counts.ssh,
-                    props.data.statistics?.grade_counts.ss,
-                    props.data.statistics?.grade_counts.sh,
-                    props.data.statistics?.grade_counts.s,
-                    props.data.statistics?.grade_counts.a,
-                    props.data.db_info?.ranks?.b,
-                    props.data.db_info?.ranks?.c,
-                    props.data.db_info?.ranks?.d
+                    scoresRanks.xh,
+                    scoresRanks.x,
+                    scoresRanks.sh,
+                    scoresRanks.s,
+                    scoresRanks.a,
+                    scoresRanks.b,
+                    scoresRanks.c,
+                    scoresRanks.d
                 ],
                 backgroundColor: [
                     colors.ranks.xh,
@@ -160,6 +210,7 @@ const UserCard = (props: userData) => {
     const today = new Date();
     const daysAgoGlobal = new Date(new Date().setDate(today.getDate() - 90)).setHours(0, 0, 0);
     const globalHistoryChartOptions = {
+        maintainAspectRatio: false,
         responsive: true,
         scales: {
             y: {
@@ -220,6 +271,7 @@ const UserCard = (props: userData) => {
 
     };
     const countryHistoryChartOptions = {
+        maintainAspectRatio: false,
         responsive: true,
         scales: {
             y: {
@@ -294,6 +346,7 @@ const UserCard = (props: userData) => {
         }]
     };
     const playsHistoryOptions = {
+        maintainAspectRatio: false,
         responsive: true,
         scales: {
             y: {
@@ -532,11 +585,11 @@ const UserCard = (props: userData) => {
     calculateScores();
     const skillsData = {
         labels: [
-            `Consistency - ${constScore}`,
-            `Speed - ${speedScore}`,
-            `Aim - ${aimScore}`,
-            `Stars - ${starsScore}`,
-            `Accuracy - ${accScore}`
+            `${language.user.top.consistency} - ${constScore}`,
+            `${language.user.top.speed} - ${speedScore}`,
+            `${language.user.top.aim} - ${aimScore}`,
+            `${language.user.top.stars} - ${starsScore}`,
+            `${language.user.top.acc} - ${accScore}`
         ],
         datasets: [{
             label: 'Skill set',
@@ -559,6 +612,11 @@ const UserCard = (props: userData) => {
                 beginAtZero: false,
             }
         },
+        scale: {
+            pointLabels: {
+                fontColor: '#ffffff'
+            },
+        },
         plugins: {
             tooltip: {
                 enabled: false
@@ -574,13 +632,13 @@ const UserCard = (props: userData) => {
             line: {
                 borderWidth: 3
             }
-        }
+        },
     };
     const ppData = {
-        labels: allPPs?.map(() => ''),
+        labels: allPPs?.map(() => '').reverse(),
         datasets: [{
             label: 'PP',
-            data: allPPs,
+            data: allPPs.reverse(),
             backgroundColor: colors.charts.topPp,
         }],
     };
@@ -591,7 +649,7 @@ const UserCard = (props: userData) => {
         scales: {
             y: {
                 beginAtZero: false,
-                min: allPPs.reverse()[0] - Math.round(allPPs.reverse()[0] * 0.1)
+                min: allPPs[0]
             },
             x: {
                 beginAtZero: false,
@@ -608,15 +666,48 @@ const UserCard = (props: userData) => {
     };
     const div1Ref = useRef<HTMLDivElement>(null);
     const div2Ref = useRef<HTMLDivElement>(null);
+
+    function setScoresHits() {
+        props.scores.best?.items.map((obj: ItemsEntity) => {
+            scoresHits.x320 += obj.statistics?.perfect ? obj.statistics.perfect : 0;
+            scoresHits.x300 += obj.statistics?.great ? obj.statistics.great : 0;
+            scoresHits.x200 += obj.statistics?.good ? obj.statistics.good : 0;
+            scoresHits.x100 += obj.statistics?.ok ? obj.statistics.ok : 0;
+            scoresHits.x50 += obj.statistics?.meh ? obj.statistics.meh : 0;
+            scoresHits.xMiss += obj.statistics?.miss ? obj.statistics.miss : 0;
+        });
+    }
+
+    function setScoresRanks() {
+        props.scores.best?.items.map((obj: ItemsEntity) => {
+            scoresRanks.xh += obj.rank === "XH" ? 1 : 0;
+            scoresRanks.x += obj.rank === "X" ? 1 : 0;
+            scoresRanks.sh += obj.rank === "SH" ? 1 : 0;
+            scoresRanks.s += obj.rank === "S" ? 1 : 0;
+            scoresRanks.a += obj.rank === "A" ? 1 : 0;
+            scoresRanks.b += obj.rank === "B" ? 1 : 0;
+            scoresRanks.c += obj.rank === "C" ? 1 : 0;
+            scoresRanks.d += obj.rank === "D" ? 1 : 0;
+        });
+    }
+
+    const [historyTabValue, setHistoryTabValue] = React.useState(0);
+    const handleHistoryChange = (event: any, newValue: number) => {
+        setHistoryTabValue(newValue);
+    };
+    const [scoresTabValue, setScoresTabValue] = React.useState(0);
+    const handleScoresChange = (event: any, newValue: number) => {
+        setScoresTabValue(newValue);
+    };
     useEffect(() => {
-        setActiveScores(props.scores.pinned.items.length > 0 ? 'pinned' : props.scores.best.items.length > 0 ? 'best' : props.scores.firsts.items.length > 0 ? 'firsts' : 'recent');
         countryLog();
         document.title = `${props.data.username} · wysi727`;
+        console.log(scoresHits)
+        console.log(scoresRanks)
         if (div1Ref.current && div2Ref.current) {
             const div1Height = div1Ref.current.offsetHeight;
             div2Ref.current.style.height = `${div1Height}px`;
         }
-        console.log(`Rendered ${props.data.username}'s profile!`)
     }, [props.data, props.scores]);
     return (
         <div className="row m-0 col-12 col-xl-10 p-0" style={{
@@ -627,221 +718,192 @@ const UserCard = (props: userData) => {
                       playtime={playtime} firstCountryLog={firstCountryLog}/>
             <BarPanel data={props.data}/>
             <div className="midPanel col-12 row gap-3 p-3 m-0">
-                <div className="d-flex flex-column col-12 col-md m-0" ref={div1Ref} style={{maxHeight: "100%"}}>
-                    {props.data.db_info?.setup ?
-                        <div className="rounded-4 shadow row mb-3 p-3"
-                             style={{backgroundColor: colors.ui.bg}}>
+                <div className="d-flex flex-column col-12 col-md m-0 rounded"
+                     ref={div1Ref}
+                     style={{
+                         maxHeight: "100%",
+                         backgroundColor: colors.ui.bg
+                     }}>
+                    {props.data.db_info?.setup &&
+                        <div className="rounded row">
                             <SetupPanel user={props.data}/>
-                        </div> : ''}
+                            <Divider/>
+                        </div>}
                     {(props.data.db_info?.global_rank.length > 0 || props.data.db_info?.country_rank.length > 0) &&
-                        <div className="rounded-4 shadow row mb-3" style={{backgroundColor: colors.ui.bg}}>
-                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
-                                <div className="d-flex flex-row justify-content-between">
-                                    <h6>Global Rank History:</h6>
-                                    <i className="bi bi-info-circle"
-                                       data-tooltip-id="reactTooltip"
-                                       data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
+                        <>
+                            <div className="rounded row">
+                                <Tabs
+                                    value={historyTabValue}
+                                    variant="fullWidth"
+                                    onChange={handleHistoryChange}
+                                    indicatorColor="primary" textColor="primary">
+                                    <Tab label={language.user.middle.graphs.globalHistory}/>
+                                    <Tab label={language.user.middle.graphs.countryHistory}/>
+                                    <Tab label={language.user.middle.graphs.playsHistory}/>
+                                </Tabs>
+                                <div className="col-12 row m-0 p-3 justify-content-center"
+                                     style={{
+                                         height: 250
+                                     }}>
+                                    {historyTabValue === 0 && (
+                                        <Line data={globalHistoryData} options={globalHistoryChartOptions}/>
+                                    )}
+                                    {historyTabValue === 1 && (
+                                        <Line data={countryHistoryData} options={countryHistoryChartOptions}/>
+                                    )}
+                                    {historyTabValue === 2 && (
+                                        <Line data={playsHistoryData} options={playsHistoryOptions}/>
+                                    )}
                                 </div>
-                                <Line data={globalHistoryData} options={globalHistoryChartOptions}/>
                             </div>
-                            <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
-                                <div className="d-flex flex-row justify-content-between">
-                                    <h6>Country Rank History:</h6>
-                                    <i className="bi bi-info-circle"
-                                       data-tooltip-id="reactTooltip"
-                                       data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
-                                </div>
-                                <Line data={countryHistoryData} options={countryHistoryChartOptions}/>
-                            </div>
-                        </div>
+                            <Divider/>
+                        </>
                     }
-                    <div className="rounded-4 shadow row mb-3" style={{backgroundColor: colors.ui.bg}}>
-                        <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
-                            <div>
-                                Hit Ratios:
-                            </div>
-                            <div className="mt-3" style={{height: 200, width: 200}}>
-                                <Doughnut data={hitData} options={doughnutOptions}/>
-                            </div>
-                            <div className="col-12 d-flex flex-row gap-2 justify-content-center flex-wrap">
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                    <div className="row">
+                        <div className="m-2">{language.user.middle.graphs.top100}:</div>
+                        <div className="row">
+                            <div className="col-12 col-lg-6 d-flex flex-column p-3 justify-content-start align-items-center">
+                                <div>{language.user.middle.graphs.topHitRatios}</div>
+                                <div className="m-3" style={{height: 200, width: 200}}>
+                                    <Doughnut data={hitData} options={doughnutOptions}/>
+                                </div>
+                                <div className="d-flex flex-row flex-wrap gap-3 justify-content-center">
+                                    {mode === 'mania' &&
+                                        <div className="d-flex flex-column justify-content-center align-items-center">
+                                            <div style={{color: colors.judgements.x320}}>320</div>
+                                            <div>{scoresHits.x320.toLocaleString()}</div>
+                                        </div>
+                                    }
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.judgements.x300}}>300</div>
-                                        <div>{props.data.statistics?.count_300?.toLocaleString()}</div>
+                                        <div>{scoresHits.x300.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    {mode === 'mania' &&
+                                        <div className="d-flex flex-column justify-content-center align-items-center">
+                                            <div style={{color: colors.judgements.x200}}>200</div>
+                                            <div>{scoresHits.x200.toLocaleString()}</div>
+                                        </div>
+                                    }
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.judgements.x100}}>100</div>
-                                        <div>{props.data.statistics?.count_100?.toLocaleString()}</div>
+                                        <div>{scoresHits.x100.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.judgements.x50}}>50</div>
-                                        <div>{props.data.statistics?.count_50?.toLocaleString()}</div>
+                                        <div>{scoresHits.x50.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.judgements.xMiss}}>Miss</div>
-                                        <div>{props.data.statistics?.count_miss?.toLocaleString()}</div>
+                                        <div>{scoresHits.xMiss.toLocaleString()}</div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
-                            <div>
-                                Rank Ratios:
-                            </div>
-                            <div className="" style={{height: 200, width: 200}}>
-                                <Doughnut data={rankData} options={doughnutOptions}/>
-                            </div>
-                            <div className="col-12 d-flex flex-row gap-2 justify-content-center flex-wrap">
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                            <div
+                                className="col-12 col-lg-6 d-flex flex-column p-3 justify-content-start align-items-center">
+                                <div>{language.user.middle.graphs.topRankRatios}</div>
+                                <div className="m-3" style={{height: 200, width: 200}}>
+                                    <Doughnut data={rankData} options={doughnutOptions}/>
+                                </div>
+                                <div className="d-flex flex-row flex-wrap gap-3 justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.xh}}>XH</div>
-                                        <div>{props.data.statistics?.grade_counts.ssh.toLocaleString()}</div>
+                                        <div>{scoresRanks.xh.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.x}}>X</div>
-                                        <div>{props.data.statistics?.grade_counts.ss}</div>
+                                        <div>{scoresRanks.x.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.sh}}>SH</div>
-                                        <div>{props.data.statistics?.grade_counts.sh}</div>
+                                        <div>{scoresRanks.sh.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.s}}>S</div>
-                                        <div>{props.data.statistics?.grade_counts.s}</div>
+                                        <div>{scoresRanks.s.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.a}}>A</div>
-                                        <div>{props.data.statistics?.grade_counts.a}</div>
+                                        <div>{scoresRanks.a.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.b}}>B</div>
-                                        <div>{props.data.db_info?.ranks?.b}</div>
+                                        <div>{scoresRanks.b.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.c}}>C</div>
-                                        <div>{props.data.db_info?.ranks?.c}</div>
+                                        <div>{scoresRanks.c.toLocaleString()}</div>
                                     </div>
-                                </div>
-                                <div className="d-flex flex-row align-items-center justify-content-between">
-                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <div className="d-flex flex-column justify-content-center align-items-center">
                                         <div style={{color: colors.ranks.d}}>D</div>
-                                        <div>{props.data.db_info?.ranks?.d}</div>
+                                        <div>{scoresRanks.d.toLocaleString()}</div>
                                     </div>
+                                </div>
+                            </div>
+                            <div className="col-12 m-0 p-3 d-flex flex-column justify-content-center"
+                                 style={{
+                                     height: 250
+                                 }}>
+                                <div className="d-flex flex-row justify-content-between">
+                                    <h6>{language.user.middle.graphs.top100plays}:</h6>
+                                </div>
+                                <div className="w-100 flex-grow-1">
+                                    <Bar data={ppData} options={ppDataOptions}/>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-4 shadow row mb-3" style={{backgroundColor: colors.ui.bg}}>
-                        <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
-                            <div className="d-flex flex-row justify-content-between">
-                                <h6>Plays History:</h6>
-                                <i className="bi bi-info-circle"
-                                   data-tooltip-id="reactTooltip"
-                                   data-tooltip-content={`You can zoom or drag by holding 'alt'`}></i>
-                            </div>
-                            <Line data={playsHistoryData} options={playsHistoryOptions}/>
-                        </div>
-                        <div className="col-12 col-lg-6 row m-0 p-3 justify-content-center">
-                            <div className="d-flex flex-row justify-content-between">
-                                <h6>Top {props.scores.best.items.length} plays:</h6>
-                            </div>
-                            <div className="w-100 flex-grow-1">
-                                <Bar data={ppData} options={ppDataOptions}/>
-                            </div>
-                        </div>
-                        <span id={"medals"}></span>
-                    </div>
-                    <div className="rounded-4 shadow row" style={{backgroundColor: colors.ui.bg}}>
+                    <Divider/>
+                    <div className="">
                         <MedalsPanel medals={props.medals} userMedals={props.data.user_achievements}
                                      userId={props.data.id}/>
                     </div>
                 </div>
-                <div className="rounded-4 shadow m-0 p-3 col-md-4 col-12 d-flex flex-column"
+                <div className="rounded m-0 col-md-4 col-12 d-flex flex-column"
                      style={{backgroundColor: colors.ui.bg}}>
-                    <div
-                        className="m-0 d-flex flex-row align-items-center justify-content-between overflow-hidden rounded-4">
-                        <div className="btn-group rounded-pill flex-grow-1 shadow">
-                            <button className="btn rounded-0 flex-grow-1"
-                                    style={{
-                                        backgroundColor: colors.ui.bg,
-                                        color: colors.ui.font
-                                    }}
-                                    data-tooltip-id={"reactTooltip"}
-                                    data-tooltip-content={"Pinned Scores"}
-                                    disabled={activeScores === 'pinned'}
-                                    onClick={() => {
-                                        setActiveScores('pinned');
-                                    }}>
-                                <i className="bi bi-pin-angle"></i>
-                            </button>
-                            <button className="btn rounded-0 flex-grow-1"
-                                    style={{
-                                        backgroundColor: colors.ui.bg,
-                                        color: colors.ui.font
-                                    }}
-                                    data-tooltip-id={"reactTooltip"}
-                                    data-tooltip-content={"First Place"}
-                                    disabled={activeScores === 'firsts'}
-                                    onClick={() => {
-                                        setActiveScores('firsts');
-                                    }}>
-                                <i className="bi bi-star"></i>
-                            </button>
-                            <button className="btn rounded-0 flex-grow-1"
-                                    style={{
-                                        backgroundColor: colors.ui.bg,
-                                        color: colors.ui.font
-                                    }}
-                                    data-tooltip-id={"reactTooltip"}
-                                    data-tooltip-content={"Best Scores"}
-                                    disabled={activeScores === 'best'}
-                                    onClick={() => {
-                                        setActiveScores('best');
-                                    }}>
-                                <i className="bi bi-bar-chart-line"></i>
-                            </button>
-                            <button className="btn rounded-0 flex-grow-1"
-                                    style={{
-                                        backgroundColor: colors.ui.bg,
-                                        color: colors.ui.font
-                                    }}
-                                    data-tooltip-id={"reactTooltip"}
-                                    data-tooltip-content={"Recent Scores"}
-                                    disabled={activeScores === 'recent'}
-                                    onClick={() => {
-                                        setActiveScores('recent');
-                                    }}>
-                                <i className="bi bi-clock-history"></i>
-                            </button>
-                        </div>
+                    <div>
+                        <Tabs
+                            value={scoresTabValue}
+                            variant="fullWidth"
+                            onChange={handleScoresChange}
+                            indicatorColor="primary" textColor="primary">
+                            <Tab label={<PushPinIcon/>}
+                                 data-tooltip-id={"reactTooltip"}
+                                 data-tooltip-content={"Pinned Scores"}/>
+                            <Tab label={<StarIcon/>}
+                                 data-tooltip-id={"reactTooltip"}
+                                 data-tooltip-content={"First Place Scores"}/>
+                            <Tab label={<SignalCellularAltIcon/>}
+                                 data-tooltip-id={"reactTooltip"}
+                                 data-tooltip-content={"Best Scores"}/>
+                            <Tab label={<WatchLaterIcon/>}
+                                 data-tooltip-id={"reactTooltip"}
+                                 data-tooltip-content={"Recent Scores"}/>
+                        </Tabs>
                     </div>
-                    <div className="m-0 p-0 flex-grow-1" style={{overflowY: "scroll"}} ref={div2Ref}>
-                        {(props.scores as any)[activeScores]?.items?.map((score: any, index: number) => (
-                            <Score data={score} num={index}
-                                   key={index}/>))}
+                    <div className="m-0 flex-grow-1" style={{overflowY: "scroll"}} ref={div2Ref}>
+                        {scoresTabValue === 0 && (
+                            props.scores.pinned.items?.map((score: any, index: number) => (
+                                <Score data={score} num={index}
+                                       key={index}/>))
+                        )}
+                        {scoresTabValue === 1 && (
+                            props.scores.firsts.items?.map((score: any, index: number) => (
+                                <Score data={score} num={index}
+                                       key={index}/>))
+                        )}
+                        {scoresTabValue === 2 && (
+                            props.scores.best.items?.map((score: any, index: number) => (
+                                <Score data={score} num={index}
+                                       key={index}/>))
+                        )}
+                        {scoresTabValue === 3 && (
+                            props.scores.recent.items?.map((score: any, index: number) => (
+                                <Score data={score} num={index}
+                                       key={index}/>))
+                        )}
                     </div>
                 </div>
             </div>
-            {/*<div dangerouslySetInnerHTML={{__html: props.data.page.html}}>*/}
-            {/*</div>*/}
         </div>
     )
 }

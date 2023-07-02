@@ -1,91 +1,39 @@
-const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
 const cors = require('cors');
-
-const axios = require('axios');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 
 const dotenv = require('dotenv');
-dotenv.config();
-
 const path = require('path');
 const User = require("./User");
+const fs = require('fs');
 
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const session = require('express-session');
+const app = express();
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+}));
+app.use(express.json());
+app.use(cookieParser());
+app.use(bodyParser.json())
+app.use(session({
+    secret: "nofuckingwaycookiezifcbluezenith727!!!",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24 * 30
+    },
+}));
 
-const {Client, Events, GatewayIntentBits} = require('discord.js');
-const MemoryStore = session.MemoryStore;
-
-
-const token = process.env.DISCORD_TOKEN;
-const client = new Client({intents: [GatewayIntentBits.Guilds]});
-client.login(token);
-
-
-// When the client is ready, run this code (only once)
-// We use 'c' for the event parameter to keep it separate from the already defined 'client'
-
-// Log in to Discord with your client's token
-
+dotenv.config();
+const discordToken = process.env.DISCORD_TOKEN;
 const tokenFilePath = path.resolve(__dirname, 'token');
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const uri = process.env.DB_CONNECTION;
-
-
-const user = '468516101639241731';
-client.users.send(user, 'content');
-client.on('messageCreate', (message) => {
-    console.log(`Message from ${message.author.tag}: ${message.content}`);
-});
-client.on(Events.InteractionCreate, async interaction => {
-    console.log(interaction)
-    if (!interaction.isChatInputCommand()) return;
-
-    const {commandName} = interaction;
-
-    console.log(commandName)
-});
-
-// bot.getDMChannel(user)
-//     .then(dmChannel => {
-//         console.log(dmChannel)
-//     })
-//     .catch((error) => {
-//         console.error('Error getting DM channel:', error);
-//     });
-// bot.on("messageCreate", (msg) => { // When a message is created
-//     if (msg.author.id !== '722915398156157009') {
-//         console.log(msg.content)
-//         if (msg.author.id === '752997287692599336') {
-//             bot.createMessage(msg.channel.id, "🖕");
-//         }
-//     }
-// });
-
-app.use(express.json());
-app.set('trust proxy', 1); // Enable proxy trust
-
-app.use(cors({
-    origin: 'http://localhost:3000', // Replace with your front-end URL
-    credentials: true,
-}));
-app.use(cookieParser());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(session({
-    secret: "nofuckingwaycookiezifcbluezenith727!!!",
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        secure: true, // Enable this in production with HTTPS
-        httpOnly: true,
-        sameSite: 'none', // Set to 'lax' or 'strict' for single origin
-    },
-}));
-
 mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -135,73 +83,12 @@ const updateUser = async (userId, username, userRanks, countryRank, mode) => {
             let response = {};
             if (await User.exists({userId: userId})) {
                 const user = await User.findOne({userId: userId});
-                switch (mode) {
-                    case 'osu':
-                        pushOrReplaceObjects(user.modes.osu.rankHistory, objectRanks);
-                        pushOrReplaceObjects(user.modes.osu.countryRankHistory, [currentCountryRank]);
-                        user.modes.osu.rankHistory.sort((a, b) => a.date - b.date);
-                        user.modes.osu.countryRankHistory.sort((a, b) => a.date - b.date);
-                        response.global_rank = user.modes.osu.rankHistory;
-                        response.country_rank = user.modes.osu.countryRankHistory;
-                        // if (user.userId === 17018032) {
-                        //     user.setup = {
-                        //         peripherals: {
-                        //             tablet: 'Wacom CTH-680',
-                        //             setup: 'Akko ACR Pro Alice Plus',
-                        //             keypad: 'Sayobot O2C',
-                        //             mouse: 'Logitech G502X Lightspeed',
-                        //             monitor: 'Acer Nitro XV252QF 24.5" 1920x1080 1 ms 390Hz',
-                        //             headphones: 'Beyerdynamic DT880 + Audient ID14 MKII',
-                        //             microphone: 'Shure SM7b + Triton Fethead + Audient ID14 MKII',
-                        //             mousepad: 'Generic 1200x600mm mousepad',
-                        //             chair: 'Corsair T3',
-                        //         },
-                        //         tablet: {
-                        //             drivers: "OpenTabletDriver",
-                        //             filters: "none",
-                        //             area: {
-                        //                 x: 216,
-                        //                 y: 121.5,
-                        //                 offsetX: 108,
-                        //                 offsetY: 60.75
-                        //             },
-                        //             maxArea: {
-                        //                 x: 216,
-                        //                 y: 135
-                        //             },
-                        //         },
-                        //         setup: {
-                        //             format: '60',
-                        //             inputs: ['z', 'x']
-                        //         }
-                        //     }
-                        // }
-                        break;
-                    case 'taiko':
-                        pushOrReplaceObjects(user.modes.taiko.rankHistory, objectRanks);
-                        pushOrReplaceObjects(user.modes.taiko.countryRankHistory, [currentCountryRank]);
-                        user.modes.taiko.rankHistory.sort((a, b) => a.date - b.date);
-                        user.modes.taiko.countryRankHistory.sort((a, b) => a.date - b.date);
-                        response.global_rank = user.modes.taiko.rankHistory;
-                        response.country_rank = user.modes.taiko.countryRankHistory;
-                        break;
-                    case 'fruits':
-                        pushOrReplaceObjects(user.modes.fruits.rankHistory, objectRanks);
-                        pushOrReplaceObjects(user.modes.fruits.countryRankHistory, [currentCountryRank]);
-                        user.modes.fruits.rankHistory.sort((a, b) => a.date - b.date);
-                        user.modes.fruits.countryRankHistory.sort((a, b) => a.date - b.date);
-                        response.global_rank = user.modes.fruits.rankHistory;
-                        response.country_rank = user.modes.fruits.countryRankHistory;
-                        break;
-                    case 'mania':
-                        pushOrReplaceObjects(user.modes.mania.rankHistory, objectRanks);
-                        pushOrReplaceObjects(user.modes.mania.countryRankHistory, [currentCountryRank]);
-                        user.modes.mania.rankHistory.sort((a, b) => a.date - b.date);
-                        user.modes.mania.countryRankHistory.sort((a, b) => a.date - b.date);
-                        response.global_rank = user.modes.mania.rankHistory;
-                        response.country_rank = user.modes.mania.countryRankHistory;
-                        break;
-                }
+                await pushOrReplaceObjects(user.modes[mode].rankHistory, objectRanks);
+                await pushOrReplaceObjects(user.modes[mode].countryRankHistory, [currentCountryRank]);
+                user.modes[mode].rankHistory.sort((a, b) => a.date - b.date);
+                user.modes[mode].countryRankHistory.sort((a, b) => a.date - b.date);
+                response.global_rank = user.modes[mode].rankHistory;
+                response.country_rank = user.modes[mode].countryRankHistory;
                 response.setup = user.setup ? user.setup : null;
                 try {
                     const contents = fs.readFileSync(path.resolve(__dirname, 'scores.csv'), 'utf8');
@@ -297,7 +184,8 @@ const updateUser = async (userId, username, userRanks, countryRank, mode) => {
                 }
             }
             return response;
-        } catch (e) {
+        } catch
+            (e) {
             console.error(e);
             return [];
         }
@@ -536,24 +424,26 @@ app.get('/oauth-redirect/:userCode/', async function (req, res) {
             });
             const data = await response.json();
             if (data?.id) {
-                const userCompact = await getUserCompact(data.id);
-                req.session.userid = userCompact.id;
-                res.cookie('userid', userCompact.id);
+                req.session.userId = data.id;
+                const userCompact = await getUserCompact(req.session.userId);
+                console.log(req.session.userId)
                 res.status(200).json(userCompact);
             } else {
                 res.status(200).json({msg: "error"});
             }
         } catch (error) {
             console.error(error);
-            res.status(400).send('Bad Request');        }
+            res.status(400).send('Bad Request');
+        }
     } catch (error) {
         console.error(error);
-        res.status(400).send('Bad Request');    }
+        res.status(400).send('Bad Request');
+    }
 });
 app.get('/login', async (req, res) => {
-    const user = req.session.userid;
+    const user = req.session.userId;
     if (user) {
-        const userCompact = await getUserCompact(req.session.userid);
+        const userCompact = await getUserCompact(req.session.userId);
         res.status(200).send(userCompact);
     } else {
         res.status(401).send('Unauthorized');
@@ -570,9 +460,7 @@ app.get('/image/:id/:url', async (req, res) => {
         const imageResponse = await fetch(`https://a.ppy.sh/${id}?${imageUrl}.jpeg`);
         const imageArrayBuffer = await imageResponse.arrayBuffer();
         const imageBuffer = Buffer.from(imageArrayBuffer);
-
-        res.set('Content-Type', 'image/jpeg');
-        res.status(200).send(imageBuffer);
+        res.status(200).set('Content-Type', 'image/jpeg').send(imageBuffer);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error fetching image');

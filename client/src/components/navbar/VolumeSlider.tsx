@@ -22,7 +22,7 @@ const VolumeSlider = () => {
                             <VolumeUpIcon/>
                 }
             </IconButton>
-            <div className="hover-container p-2 pt-3 mt-2 rounded-bottom"
+            <div className="hover-container p-2 pt-3 rounded-bottom"
                  style={{
                      backgroundColor: '#121212',
                      width: 42

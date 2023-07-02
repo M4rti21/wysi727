@@ -10,12 +10,16 @@ import Keypad4 from "./setup/Keypad4";
 import {User} from "../../../interfaces/UserCardInterface";
 import Mouse from "./setup/Mouse";
 import KeyboardTkl from "./setup/KeyboardTkl";
+import {Tab, Tabs} from "@mui/material";
+import {ActiveLanguageType, languageStore} from "../../../store/languages";
+import {Line} from "react-chartjs-2";
 
 interface propsInterface {
     user: User;
 }
 
 const SetupPanel = (props: propsInterface) => {
+    const language = languageStore((state: ActiveLanguageType) => state.text);
     const colors = colorsSettings((state: ColorSettingsType) => state.colors);
     let keyboard = '0';
     const upperCaseFirst = (str: string) => {
@@ -50,39 +54,22 @@ const SetupPanel = (props: propsInterface) => {
             }
         }
     }
+    const [setupTabValue, setSetupTabValue] = React.useState(0);
+    const handleSetupChange = (event: any, newValue: number) => {
+        setSetupTabValue(newValue);
+    };
     return (
         <>
-            <ul className="nav nav-pills d-flex flex-row" id="SetupTabs" role="tablist">
-                <li className="nav-item flex-grow-1 d-flex justify-content-center" role="presentation">
-                    <button className="nav-link"
-                            id="keyboard-tablet-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#keyboard-tablet-pane"
-                            type="button" role="tab"
-                            aria-controls="keyboard-tablet-pane"
-                            aria-selected="true">
-                        <i className="bi bi-keyboard me-2"></i>
-                        {props.user.playstyle?.map((thing) => upperCaseFirst(thing)).join(' & ')}
-                    </button>
-                </li>
-                <li className="nav-item flex-grow-1 d-flex justify-content-center" role="presentation">
-                    <button className="nav-link"
-                            id="peripherals-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#peripherals-pane"
-                            type="button" role="tab"
-                            aria-controls="peripherals-pane"
-                            aria-selected="true">
-                        <i className="bi bi-pc-display me-2"></i>
-                        Peripherals
-                    </button>
-                </li>
-            </ul>
+            <Tabs
+                value={setupTabValue}
+                variant="fullWidth"
+                onChange={handleSetupChange}
+                indicatorColor="primary" textColor="primary">
+                <Tab label={props.user.playstyle?.map((thing) => upperCaseFirst(thing)).join(' & ')}/>
+                <Tab label={language.user.middle.setup.peripherals}/>
+            </Tabs>
             <div className="tab-content mt-2">
-                <div className="tab-pane fade show"
-                     id="keyboard-tablet-pane"
-                     role="tabpanel"
-                     aria-labelledby="keyboard-tablet-tab">
+                {setupTabValue === 0 && (
                     <div className={"row"}>
                         {props.user.playstyle?.includes('keyboard') ?
                             <div className="col-12 col-lg-6 p-3 d-flex flex-column">
@@ -106,11 +93,8 @@ const SetupPanel = (props: propsInterface) => {
                                 <div className={"mx-auto mt-2"}>{props.user.db_info.setup.peripherals?.mouse}</div>
                             </div>}
                     </div>
-                </div>
-                <div className="tab-pane fade"
-                     id="peripherals-pane"
-                     role="tabpanel"
-                     aria-labelledby="peripherals-tab">
+                )}
+                {setupTabValue === 1 && (
                     <div className={"d-flex justify-content-center"}>
                         <table className="table" style={{color: colors.ui.font}}>
                             <tbody>
@@ -121,8 +105,7 @@ const SetupPanel = (props: propsInterface) => {
                                 </tr>
                             ))}</tbody>
                         </table>
-                    </div>
-                </div>
+                    </div>)}
             </div>
         </>
     )

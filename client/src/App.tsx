@@ -4,7 +4,7 @@ import Navbar from "./components/navbar/Navbar";
 import Home from "./views/Home";
 import Users from "./views/Users";
 import RedirectHandler from "./RedirectHandler";
-import {userSettings, UserSettingsType} from "./store/store";
+import {CompactUser, userSettings, UserSettingsType} from "./store/store";
 import axios from 'axios';
 import {MedalInterface} from "./interfaces/MedalsInterface";
 import {ThemeProvider, createTheme} from '@mui/material/styles';
@@ -20,6 +20,11 @@ const darkTheme = createTheme({
             dark: '#000000',
             contrastText: '#000000',
         },
+    },
+    typography: {
+        button: {
+            textTransform: 'none'
+        }
     },
     components: {
         MuiSlider: {
@@ -50,8 +55,8 @@ const darkTheme = createTheme({
     },
 });
 const App = () => {
-    axios.defaults.withCredentials = true;
     const logged = userSettings((state: UserSettingsType) => state.logged);
+    const toLog = userSettings((state: UserSettingsType) => state.toLog);
     const setUser = userSettings((state: UserSettingsType) => state.setUser);
     const [medals, setMedals] = useState<{ [key: string]: MedalInterface[] }>({});
     const getMedals = async () => {
@@ -75,31 +80,38 @@ const App = () => {
         }
         setMedals(categoryArrays);
     }
-    const checkLoggedIn = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/login', {
-                credentials: 'include' // Include cookies in the request
-            });
-            if (response.ok) {
-                const userData = await response.json();
-                console.log(userData)
-                setUser(userData); // Store the user data in state
-            }
-        } catch (error) {
-            console.error('Error checking user authentication:', error);
-        }
-    };
     useEffect(() => {
         getMedals().then();
+    }, [])
+    useEffect(() => {
         if (!logged) {
-            checkLoggedIn().then()
+            axios.get('http://localhost:5000/login')
+                .then((res) => {
+                    console.log(res);
+                    const userData: CompactUser = res.data;
+                    console.log(userData)
+                    setUser(userData);
+                })
+                .catch(error => {
+                    if (error.response) {
+                        // The request was made, but the server responded with an error status code
+                        console.log(error.response.data);
+                        console.log(error.response.status);
+                    } else if (error.request) {
+                        // The request was made, but no response was received
+                        console.log(error.request);
+                    } else {
+                        // Something happened in setting up the request that triggered an Error
+                        console.log('Error', error.message);
+                    }
+                    console.log(error.config);
+                });
         }
-    }, []);
+    }, [toLog]);
     return (
         <> <ThemeProvider theme={darkTheme}>
             <CssBaseline/>
             <Navbar/>
-            <DevelopBanner develop={false}/>
             <div style={{
                 backgroundImage: `url(${require('./assets/bg.svg').default})`,
                 backgroundSize: "cover",
@@ -113,6 +125,7 @@ const App = () => {
                         overflowY: "scroll",
                         marginTop: 56
                     }}>
+                    <DevelopBanner develop={true}/>
                     <Routes>
                         <Route path="/oauth-redirect" element={<RedirectHandler/>}/>
                         <Route path="/" element={<Home/>}/>

@@ -19,12 +19,17 @@ const ColorPicker = () => {
     };
     return (
         <>
-            <div className="p-0 m-0 shadow hover-button">
+            <div className="p-0 m-0 hover-button">
                 <IconButton>
                     <ColorLensIcon/>
                 </IconButton>
-                <div className="bg-dark rounded hover-container">
-                    <Tabs value={value} onChange={handleChange} indicatorColor="primary" textColor="primary">
+                <div className="hover-container"
+                     style={{width: 280}}>
+                    <Tabs value={value}
+                          centered
+                          onChange={handleChange}
+                          indicatorColor="primary"
+                          textColor="primary">
                         <Tab label={<WallpaperIcon/>}/>
                         <Tab label={<TextFieldsIcon/>}/>
                         <Tab label={<FormatPaintIcon/>}/>
@@ -32,6 +37,7 @@ const ColorPicker = () => {
                     {value === 0 && (
                         <SketchPicker
                             color={colors.ui.bg}
+                            width={'100%'}
                             onChange={
                                 (col) => {
                                     setBg(col.hex)
@@ -40,6 +46,7 @@ const ColorPicker = () => {
                     {value === 1 && (
                         <SketchPicker
                             color={colors.ui.font}
+                            width={'100%'}
                             onChange={
                                 (col) => {
                                     setFont(col.hex);
@@ -49,6 +56,7 @@ const ColorPicker = () => {
                     {value === 2 && (
                         <SketchPicker
                             color={colors.ui.main}
+                            width={'100%'}
                             onChange={
                                 (col) => {
                                     setMain(col.hex)

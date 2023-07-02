@@ -4,11 +4,13 @@ export interface ScoresType {
     pinned: Pinned;
     recent: Pinned;
 }
+
 export interface Best {
     items: ItemsEntity[];
     pagination: Pagination;
     count: number;
 }
+
 export interface ItemsEntity {
     accuracy: number;
     beatmap_id: number;
@@ -34,21 +36,28 @@ export interface ItemsEntity {
     user: User;
     weight: Weight;
 }
+
 export interface MaximumStatistics {
     miss: number;
 }
+
 export interface ModsEntity {
     acronym: string;
 }
+
 export interface Statistics {
-    great: number;
-    ok: number;
-    meh: number;
-    miss: number;
+    perfect?: number;   // 320
+    great: number;      // 300
+    good?: number;      // 200
+    ok: number;         // 100
+    meh: number;        // 50
+    miss: number;       // 0
 }
+
 export interface CurrentUserAttributes {
     pin: null;
 }
+
 export interface Beatmap {
     beatmapset_id: number;
     difficulty_rating: number;
@@ -78,6 +87,7 @@ export interface Beatmap {
     url: string;
     checksum: string;
 }
+
 export interface Beatmapset {
     artist: string;
     artist_unicode: string;
@@ -99,6 +109,7 @@ export interface Beatmapset {
     user_id: number;
     video: boolean;
 }
+
 export interface Covers {
     cover: string;
     "cover@2x": string;
@@ -109,6 +120,7 @@ export interface Covers {
     slimcover: string;
     "slimcover@2x": string;
 }
+
 export interface User {
     avatar_url: string;
     country_code: string;
@@ -124,18 +136,22 @@ export interface User {
     profile_colour: null;
     username: string;
 }
+
 export interface Weight {
     percentage: number;
     pp: number;
 }
+
 export interface Pagination {
     hasMore: boolean;
 }
+
 export interface Firsts {
     items: (ItemsEntity1)[];
     pagination: Pagination;
     count: number;
 }
+
 export interface ItemsEntity1 {
     accuracy: number;
     beatmap_id: number;
@@ -160,9 +176,11 @@ export interface ItemsEntity1 {
     beatmapset: Beatmapset1;
     user: User;
 }
+
 export interface ModsEntity1 {
     acronym: string;
 }
+
 export interface Beatmapset1 {
     artist: string;
     artist_unicode: string;
@@ -184,11 +202,13 @@ export interface Beatmapset1 {
     user_id: number;
     video: boolean;
 }
+
 export interface Pinned {
     items: ItemsEntity2[];
     pagination: Pagination;
     count: number;
 }
+
 export interface ItemsEntity2 {
     accuracy: number;
     beatmap_id: number;
@@ -213,6 +233,7 @@ export interface ItemsEntity2 {
     beatmapset: Beatmapset1;
     user: User;
 }
+
 export interface Statistics1 {
     great: number;
     ok: number;

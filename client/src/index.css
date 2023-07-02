@@ -8,8 +8,50 @@
 }
 
 @font-face {
+    font-family: "IBMPlexSans";
+    src: url('./fonts/ibm/IBMPlexSans-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
     font-family: "IBMPlexSansJP";
-    src: url('./fonts/IBMPlexSansJP-Medium.ttf');
+    src: url('./fonts/ibm/IBMPlexSansJP-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "IBMPlexSansArabic";
+    src: url('./fonts/ibm/IBMPlexSansArabic-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "IBMPlexSansDevanagari";
+    src: url('./fonts/ibm/IBMPlexSansDevanagari-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "IBMPlexSansHebrew";
+    src: url('./fonts/ibm/IBMPlexSansHebrew-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "IBMPlexSansKR";
+    src: url('./fonts/ibm/IBMPlexSansKR-Medium.ttf');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "IBMPlexSansThai";
+    src: url('./fonts/ibm/IBMPlexSansThai-Medium.ttf');
     font-style: normal;
     font-weight: normal;
 }
@@ -63,6 +105,19 @@
     font-weight: normal;
 }
 
+* {
+    font-family: "IBMPlexSans",
+    "IBMPlexSansJP",
+    "IBMPlexSansArabic",
+    "IBMPlexSansDevanagari",
+    "IBMPlexSansHebrew",
+    "IBMPlexSansKR", "IBMPlexSansThai",
+    sans-serif !important;
+    font-weight: normal !important;
+    text-decoration: none !important;
+    border-collapse: separate !important;
+}
+
 body, html {
     margin: 0;
     padding: 0;
@@ -80,15 +135,8 @@ body {
     width: 100vw;
 }
 
-* {
-    font-family: "Torus Pro", sans-serif !important;
-    font-weight: normal !important;
-    text-decoration: none !important;
-    border-collapse: separate !important;
-}
-
 h1, h2, h3, h4, h5, h6 {
-    font-weight: bold !important;
+    font-weight: normal !important;
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -136,6 +184,7 @@ a:hover {
     box-sizing: border-box !important;
     -moz-box-sizing: border-box !important;
     -webkit-box-sizing: border-box !important;
+    box-shadow: none !important;
 }
 
 *::-webkit-scrollbar {
@@ -168,13 +217,16 @@ a:hover {
 .hover-container {
     display: none;
     position: absolute;
-    top: 40px;
+    top: 48px;
     transform: translateY(-100%);
     transition: transform 0.5s ease;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     justify-items: center;
+    background-color: #222222 !important;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
 
 .volume-slider {
@@ -277,7 +329,7 @@ hr {
 
 .modal-backdrop {
     z-index: 50 !important;
-    display: none ;
+    display: none;
 }
 
 

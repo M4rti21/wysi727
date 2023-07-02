@@ -9,7 +9,7 @@ interface propsInterface {
 
 const KeyboardTkl = (props: propsInterface) => {
     return (
-        <div className="rounded-3 p-2 d-flex flex-column gap-2" style={{outline: `solid 1px ${props.colors.ui.font}`}}>
+        <div className="rounded-3 p-2 d-flex flex-row gap-2" style={{outline: `solid 1px ${props.colors.ui.font}`}}>
             <div className="d-flex flex-column">
                 <div className={"d-flex flex-row"}>
                     <div className={"me-auto"}><Keycap

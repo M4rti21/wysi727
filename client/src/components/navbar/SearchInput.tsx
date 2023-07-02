@@ -1,11 +1,13 @@
 import React, {useState} from "react";
 import {useNavigate} from 'react-router-dom';
 import {modeSettings, ModeSettingsType} from "../../store/store";
-import {IconButton, InputBase, Paper, TextField} from "@mui/material";
+import {IconButton, InputBase} from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
-import ModeButton from "./ModeButton";
+import {ActiveLanguageType, languageStore} from "../../store/languages";
 
 const SearchInput = () => {
+    const language = languageStore((state: ActiveLanguageType) => state.text);
+
     const mode = modeSettings((state: ModeSettingsType) => state.mode);
     const navigate = useNavigate();
     const [data, setData] = useState('');
@@ -26,7 +28,7 @@ const SearchInput = () => {
               className={"d-flex flex-row"}>
             <InputBase
                 sx={{ml: 1, flex: 1}}
-                placeholder="Username"
+                placeholder={language.navbar.username}
                 onChange={handleChange} value={data}
             />
             <IconButton type="submit" disabled={data === ''}>

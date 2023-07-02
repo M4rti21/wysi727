@@ -16,7 +16,7 @@ const root = ReactDOM.createRoot(
 root.render(
     <BrowserRouter>
         <ParallaxProvider>
-            <ReactTooltip id="reactTooltip" style={{zIndex: 100}}/>
+            <ReactTooltip id="reactTooltip" style={{zIndex: 10000}}/>
             <App/>
         </ParallaxProvider>
     </BrowserRouter>

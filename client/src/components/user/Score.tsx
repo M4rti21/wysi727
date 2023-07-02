@@ -3,9 +3,13 @@ import {ItemsEntity, ModsEntity} from "../../interfaces/ScoresInterface";
 import {ParallaxBanner} from "react-scroll-parallax";
 import {ColorSettingsType, colorsSettings, volumeSettings, VolumeSettingsType} from "../../store/store";
 import ScoreModal from "./ScoreModal";
-import html2canvas from 'html2canvas';
 import domtoimage from 'dom-to-image';
-
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CheckIcon from '@mui/icons-material/Check';
 
 interface propsInterface {
     data: ItemsEntity;
@@ -25,7 +29,6 @@ const Score = (props: propsInterface) => {
                 });
         }
     }
-
     const volume = volumeSettings((state: VolumeSettingsType) => state.realVolume);
     const colors = colorsSettings((state: ColorSettingsType) => state.colors);
     const dateObj = new Date(props.data.ended_at);
@@ -126,7 +129,7 @@ const Score = (props: propsInterface) => {
 
     return (
         <>
-            <div id={props.num.toString()} className="rounded-4 mb-2 overflow-hidden"
+            <div id={props.num.toString()} className="rounded mb-2 overflow-hidden"
                  style={{
                      color: '#ffffff',
                      minHeight: 100,
@@ -138,9 +141,9 @@ const Score = (props: propsInterface) => {
                             speed: 0
                         }]}
                     style={{width: "100%", height: "100%"}}>
-                    <div className="p-2 m-0 rounded-4 " style={{backdropFilter: "brightness(40%) blur(4px)"}}>
+                    <div className="p-2 m-0 rounded " style={{backdropFilter: "brightness(40%) blur(4px)"}}>
                         <div className="d-flex flex-row align-items-center gap-3">
-                            <div className="beatmapImg ps-1 rounded-3 ratio-1x1" style={{
+                            <div className="beatmapImg ps-1 rounded ratio-1x1" style={{
                                 backgroundImage: `url(${props.data.beatmapset.covers.list})`,
                                 backgroundPosition: "center",
                                 backgroundSize: "cover",
@@ -149,7 +152,6 @@ const Score = (props: propsInterface) => {
                                 minWidth: 50,
                                 maxWidth: 50,
                             }}>
-                                #{props.num + 1}
                             </div>
                             <div className="d-flex flex-row justify-content-between">
                                 <div className="d-flex flex-column">
@@ -218,9 +220,21 @@ const Score = (props: propsInterface) => {
                         </div>
                         <div className="d-flex flex-row justify-content-between align-items-end">
                             <div className="d-flex flex-row mb-1 gap-2">
+                                {
+                                    props.data.statistics?.perfect &&
+                                    <div style={{color: colors.judgements.x320}}>
+                                        {props.data.statistics.perfect}
+                                    </div>
+                                }
                                 <div style={{color: colors.judgements.x300}}>
                                     {props.data.statistics.great}
                                 </div>
+                                {
+                                    props.data.statistics?.good &&
+                                    <div style={{color: colors.judgements.x200}}>
+                                        {props.data.statistics.good}
+                                    </div>
+                                }
                                 <div style={{color: colors.judgements.x100}}>
                                     {props.data.statistics.ok ? props.data.statistics.ok : '0'}
                                 </div>
@@ -243,7 +257,8 @@ const Score = (props: propsInterface) => {
                             </div>
                         </div>
                         <div className="d-flex flex-row justify-content-between">
-                            <div>
+                            <div className="d-flex flex-row gap-1">
+                                <div>#{props.num + 1} |</div>
                                 <button onClick={togglePlayback}
                                         style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}>
                                     <audio ref={audioRef} src={`https:${props.data.beatmapset.preview_url}`}/>
@@ -287,24 +302,30 @@ const Score = (props: propsInterface) => {
                                 <div>
                                     {Math.round(props.data.pp)}pp
                                 </div>
-                                <div>
-                                    {props.data.beatmapset.status === "graveyard" ?
-                                        <i className="bi bi-slash-circle" style={{color: '#cccccc'}}></i> :
-                                        props.data.beatmapset.status === "wip" ?
-                                            <i className="bi bi-tools" style={{color: '#fe9967'}}></i> :
-                                            props.data.beatmapset.status === "pending" ?
-                                                <i className="bi bi-clock" style={{color: '#ffd966'}}></i> :
-                                                props.data.beatmapset.status === "ranked" ?
-                                                    <i className="bi bi-chevron-double-up"
-                                                       style={{color: '#66ccff'}}></i> :
-                                                    props.data.beatmapset.status === "approved" ?
-                                                        <i className="bi bi-check-lg" style={{color: '#b3ff66'}}></i> :
-                                                        props.data.beatmapset.status === "qualified" ?
-                                                            <i className="bi bi-check-lg"
-                                                               style={{color: '#66ccff'}}></i> :
-                                                            props.data.beatmapset.status === "loved" ?
-                                                                <i className="bi bi-suit-heart-fill"
-                                                                   style={{color: '#fe67ab'}}></i> : ""}
+                                <div
+                                    data-tooltip-id="reactTooltip"
+                                    data-tooltip-content={props.data.beatmapset.status}>
+                                    {props.data.beatmapset.status === "graveyard" &&
+                                        <HighlightOffIcon
+                                            style={{color: colors.beatmap.graveyard}}/>}
+                                    {props.data.beatmapset.status === "wip" &&
+                                        <ConstructionIcon
+                                            style={{color: colors.beatmap.wip}}/>}
+                                    {props.data.beatmapset.status === "pending" &&
+                                        <PendingActionsIcon
+                                            style={{color: colors.beatmap.pending}}/>}
+                                    {props.data.beatmapset.status === "ranked" &&
+                                        <KeyboardDoubleArrowUpIcon
+                                            style={{color: colors.beatmap.ranked}}/>}
+                                    {props.data.beatmapset.status === "approved" &&
+                                        <CheckIcon
+                                            style={{color: colors.beatmap.approved}}/>}
+                                    {props.data.beatmapset.status === "qualified" &&
+                                        <CheckIcon
+                                            style={{color: colors.beatmap.qualified}}/>}
+                                    {props.data.beatmapset.status === "loved" &&
+                                        <FavoriteIcon
+                                            style={{color: colors.beatmap.loved}}/>}
                                 </div>
                             </div>
                         </div>

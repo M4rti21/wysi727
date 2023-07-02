@@ -21,30 +21,30 @@ const VolumeSlider = () => {
         <>
             <div className="d-flex flex-column align-items-center gap-2 hover-button">
                 <IconButton>
-                    <img className="mode-icon" src={require(`../../assets/mode-icons/${mode}.svg`)} alt="ico"/>
+                    <img className="mode-icon" src={require(`../../assets/mode-icons/${mode}.svg`)} alt="ico" style={{width: 20}}/>
                 </IconButton>
-                <div className="hover-container p-2 rounded" style={{backgroundColor: '#121212'}}>
+                <div className="hover-container p-2" style={{backgroundColor: '#121212'}}>
                     <div className="d-flex flex-column align-items-center">
                         <IconButton
                             color="primary"
                             disabled={mode === 'osu'}
                             onClick={() => handleChange('osu')}>
-                            <img className="mode-icon" src={require(`../../assets/mode-icons/osu.svg`).default} alt="ico"/>
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/osu.svg`).default} alt="ico" style={{width: 20}}/>
                         </IconButton>
                         <IconButton
                             disabled={mode === 'taiko'}
                             onClick={() => handleChange('taiko')}>
-                            <img className="mode-icon" src={require(`../../assets/mode-icons/taiko.svg`).default} alt="ico"/>
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/taiko.svg`).default} alt="ico" style={{width: 20}}/>
                         </IconButton>
                         <IconButton
                             disabled={mode === 'fruits'}
                             onClick={() => handleChange('fruits')}>
-                            <img className="mode-icon" src={require(`../../assets/mode-icons/fruits.svg`).default} alt="ico"/>
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/fruits.svg`).default} alt="ico" style={{width: 20}}/>
                         </IconButton>
                         <IconButton
                             disabled={mode === 'mania'}
                             onClick={() => handleChange('mania')}>
-                            <img className="mode-icon" src={require(`../../assets/mode-icons/mania.svg`).default} alt="ico"/>
+                            <img className="mode-icon" src={require(`../../assets/mode-icons/mania.svg`).default} alt="ico" style={{width: 20}}/>
                         </IconButton>
                     </div>
                 </div>

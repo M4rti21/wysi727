@@ -1,20 +1,15 @@
 import React, {useEffect} from "react";
-import {CompactUser, userSettings, UserSettingsType} from "./store/store";
 import {useNavigate} from "react-router-dom";
+import {userSettings, UserSettingsType} from "./store/store";
 
 const RedirectHandler = () => {
         const navigate = useNavigate();
-        const setNewUser = userSettings((state: UserSettingsType) => state.setUser);
-
+        const setToLog = userSettings((state: UserSettingsType) => state.setToLog);
         const handleRedirect = async () => {
             const authorizationCode = new URLSearchParams(window.location.search).get('code');
-            const response = await fetch(`http://localhost:5000/oauth-redirect/${authorizationCode}`);
-            const newUser: CompactUser = await response.json();
-            if (newUser.id) {
-                setNewUser(newUser);
-            }
+            await fetch(`http://localhost:5000/oauth-redirect/${authorizationCode}`);
+            setToLog();
             navigate('/');
-
         };
         useEffect(() => {
             handleRedirect().then();

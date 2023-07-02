@@ -10,6 +10,8 @@ export interface CompactUser {
 
 export interface UserSettingsType {
     logged: boolean;
+    toLog: boolean;
+    setToLog: () => void;
     user?: CompactUser | undefined;
     setUser: (user: CompactUser) => void;
     removeUser: () => void;
@@ -18,8 +20,14 @@ export interface UserSettingsType {
 export const userSettings = create<UserSettingsType>(
     (set) => ({
         logged: false,
+        toLog: false,
         setUser: (newUser: CompactUser) => {
             set({user: newUser, logged: true})
+        },
+        setToLog: () => {
+            set(produce((state: UserSettingsType) => {
+                state.toLog = !state.toLog;
+            }));
         },
         removeUser: () => {
             set({user: undefined, logged: false})
@@ -44,7 +52,9 @@ export const colorsSettings = create<ColorSettingsType>(
                 main: '#b74757',
             },
             judgements: {
+                x320: '#bbbbbb',
                 x300: '#78dcec',
+                x200: '#2266ff',
                 x100: '#88e55d',
                 x50: '#fdfd97',
                 xMiss: '#f87454',
@@ -59,6 +69,15 @@ export const colorsSettings = create<ColorSettingsType>(
                 c: '#bc64f4',
                 d: '#f87454',
                 f: '#aaaaaa'
+            },
+            beatmap: {
+                graveyard: '#cccccc',
+                wip: '#fe9967',
+                pending: '#ffd966',
+                ranked: '#66ccff',
+                approved: '#b3ff66',
+                qualified: '#66ccff',
+                loved: '#fe67ab',
             },
             charts: {
                 lvl: '#ffffff',

@@ -21,7 +21,7 @@ const Users = (props: PropsInterface) => {
 
     const mode = modeSettings((state: ModeSettingsType) => state.mode);
     const setMode = modeSettings((state: ModeSettingsType) => state.setMode);
-    const getData = async (userId: number) => {
+    const getData = async (userId: number, mode: string) => {
         userDispatch({type: ACTION_TYPES.FETCH_START});
         fetch(`http://localhost:5000/usrInfo/${userId}/${mode}`)
             .then(async (data) => {
@@ -33,10 +33,10 @@ const Users = (props: PropsInterface) => {
                 userDispatch({type: ACTION_TYPES.FETCH_ERROR})
                 console.error(err);
             })
-        const pinnedScores = await getScores(userId, 'pinned');
+        const pinnedScores = await getScores(userId, 'pinned', mode);
         const firstsScores: any[] = [];
-        const bestScores = await getScores(userId, 'best');
-        const recentScores = await getScores(userId, 'recent')
+        const bestScores = await getScores(userId, 'best', mode);
+        const recentScores = await getScores(userId, 'recent', mode)
         if (!scores.error) {
             scoresDispatch({
                 type: ACTION_TYPES.FETCH_SUCCESS,
@@ -45,7 +45,7 @@ const Users = (props: PropsInterface) => {
         }
     };
 
-    const getScores = async (userId: number, thing: string) => {
+    const getScores = async (userId: number, thing: string, mode: string) => {
         return await fetch(`http://localhost:5000/usrScores/${userId}/${thing}/${mode}`)
             .then(async (data) => {
                 return await data.json();
@@ -70,13 +70,15 @@ const Users = (props: PropsInterface) => {
     useEffect(() => {
         if (urlUsername) {
             if (parseInt(urlUsername)) {
-                const modes = ['osu', 'taiko', 'fruits', 'mania'];
-                if (urlMode) {
-                    setMode(modes.includes(urlMode) ? urlMode : mode);
+                const modes: string[] = ['osu', 'taiko', 'fruits', 'mania'];
+                let newMode: string;
+                if (urlMode && modes.includes(urlMode)) {
+                    newMode = urlMode;
                 } else {
-                    setMode(mode);
+                    newMode = mode;
                 }
-                getData(parseInt(urlUsername));
+                setMode(newMode);
+                getData(parseInt(urlUsername), newMode).then();
             } else {
                 getUserId(urlUsername);
             }
@@ -95,7 +97,7 @@ const Users = (props: PropsInterface) => {
                     : user.data && scores.data ?
                         <UserCard data={user.data}
                                   scores={scores.data}
-                                  medals={props.medals} />
+                                  medals={props.medals}/>
                         : ''}
         </div>
     );

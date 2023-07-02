@@ -1,7 +1,10 @@
 import React from "react";
 import queryString from 'query-string';
 import {Button} from "@mui/material";
+import {ActiveLanguageType, languageStore} from "../../store/languages";
 const OsuLogin = () => {
+    const language = languageStore((state: ActiveLanguageType) => state.text);
+
     const login = async () => {
         const params = {
             client_id: 22795,
@@ -14,7 +17,7 @@ const OsuLogin = () => {
     }
     return (
         <Button onClick={login} color="primary">
-            Login with osu!
+            {language.navbar.loginWithOsu}
         </Button>
     );
 }
