@@ -53,6 +53,10 @@ export interface User {
     support_level: number;
     user_achievements: UserAchievementsEntity[];
     rank_history: RankHistory;
+    customBadges?: {
+        translator?: boolean,
+        developer?: boolean,
+    }
 }
 
 export interface DbInfo {

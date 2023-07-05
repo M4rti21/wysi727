@@ -1,18 +1,33 @@
 import React, {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {userSettings, UserSettingsType} from "./store/store";
+import axios from "axios";
 
 const RedirectHandler = () => {
+        axios.defaults.withCredentials = true;
+
         const navigate = useNavigate();
-        const setToLog = userSettings((state: UserSettingsType) => state.setToLog);
-        const handleRedirect = async () => {
+        const setSessionUser = userSettings((state: UserSettingsType) => state.setSessionUser);
+
+        function handleRedirect() {
             const authorizationCode = new URLSearchParams(window.location.search).get('code');
-            await fetch(`http://localhost:5000/oauth-redirect/${authorizationCode}`);
-            setToLog();
+            axios.get(`http://localhost:5000/oauth-redirect/${authorizationCode}`)
+                .then((res) => {
+                    if (res.data.error) {
+                        console.error(res.data.msg);
+                    } else if (res.data.user) {
+                        console.log(res.data.user);
+                        setSessionUser(res.data.user)
+                    }
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
             navigate('/');
-        };
+        }
+
         useEffect(() => {
-            handleRedirect().then();
+            handleRedirect();
         }, []);
 
         return (

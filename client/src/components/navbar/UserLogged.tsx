@@ -1,49 +1,87 @@
-import React from "react";
-import {userSettings, UserSettingsType} from "../../store/store";
+import React, {useEffect, useRef, useState} from "react";
+import {ActiveLanguageType, languageStore, userSettings, UserSettingsType} from "../../store/store";
 import {Link} from "react-router-dom";
+import {Avatar, Button, ToggleButton} from "@mui/material";
+import PersonIcon from '@mui/icons-material/Person';
+import Divider from "@mui/material/Divider";
+import LogoutIcon from '@mui/icons-material/Logout';
+import axios from "axios";
 
 const UserLogged = () => {
-    const removeUser = userSettings((state: UserSettingsType) => state.removeUser);
-    const user = userSettings((state: UserSettingsType) => state.user);
-    const logout = async () => {
-        removeUser();
-        const response = await fetch(`http://localhost:5000/logout`);
-        const data = await response.json();
-        console.log(data);
+    const language = languageStore((state: ActiveLanguageType) => state.text);
+    const english = languageStore((state: ActiveLanguageType) => state.english);
+
+    const removeSessionUser = userSettings((state: UserSettingsType) => state.removeSessionUser);
+    const sessionUser = userSettings((state: UserSettingsType) => state.sessionUser);
+
+    function logout() {
+        axios.get(`http://localhost:5000/logout`)
+            .then((res) => {
+                console.log(res);
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+        removeSessionUser();
     }
 
+    const [selected, setSelected] = useState<boolean>(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setSelected(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
     return (
-        <div className="dropdown-left">
-            <button
-                className="btn btn-dark dropdown-toggle p-0 ps-2 overflow-hidden d-flex flex-row gap-2 align-items-center"
-                type="button" data-bs-toggle="dropdown"
-                aria-expanded="false">
-                <div>{user?.username}</div>
-                <img height={36} width={36} alt={"pfp"} src={user?.img}/>
-            </button>
-            <ul className="dropdown-menu dropdown-menu-dark">
-                <li>
-                    <Link className="dropdown-item text-decoration-none" to={`/users/${user?.id}/osu`}>
-                        <i className="bi bi-person me-2"></i>727 profile
-                    </Link>
-                </li>
-                <li>
-                    <a className="dropdown-item text-decoration-none" href={`https://osu.ppy.sh/users/${user?.id}`}
-                       target={"_blank"}>
-                        <img height={16} width={16} alt={"osu!log"}
-                             src={require('../../assets/osulogo.svg').default}
-                             className={"me-2"}/>osu!profile
-                    </a>
-                </li>
-                <li>
-                    <hr className="dropdown-divider"/>
-                </li>
-                <li>
-                    <button className="dropdown-item btn rounded-0" onClick={logout}>
-                        <i className="bi bi-box-arrow-right me-2"></i>Logout
-                    </button>
-                </li>
-            </ul>
+        <div className="hover-button">
+            <ToggleButton
+                value="check"
+                selected={selected}
+                onChange={() => {
+                    setSelected(!selected);
+                }}
+                className="p-0">
+                <Avatar variant="rounded">
+                    <img style={{height: "100%"}} alt={"pfp"} src={sessionUser?.avatar_url}/>
+                </Avatar>
+            </ToggleButton>
+            <div className="hover-container rounded-bottom"
+                 style={{
+                     backgroundColor: '#121212',
+                     right: 0
+                 }}
+                 ref={dropdownRef}
+                 hidden={!selected}>
+                <Link className="dropdown-item text-decoration-none" to={`/users/${sessionUser?.id}/osu`}>
+                    <Button className="w-100 d-flex justify-content-start pe-5 ps-3"
+                            startIcon={<PersonIcon/>}>
+                        {language?.navbar?.wysiProfile ? language.navbar.wysiProfile : english.navbar.wysiProfile}
+                    </Button>
+                </Link>
+                <a className="dropdown-item text-decoration-none" href={`https://osu.ppy.sh/users/${sessionUser?.id}`}
+                   target={"_blank"}>
+                    <Button className="w-100 d-flex justify-content-start pe-5 ps-3"
+                            startIcon={
+                                <img height={20} width={20} alt={"osu!log"}
+                                     src={require('../../assets/osulogo.svg').default}/>}>
+                        {language?.navbar?.osuProfile ? language.navbar.osuProfile : english.navbar.osuProfile}
+                    </Button>
+
+                </a>
+                <Divider/>
+                <Button className="w-100 d-flex justify-content-start pe-5 ps-3"
+                        onClick={logout} startIcon={<LogoutIcon/>}>
+                    {language?.navbar?.logout ? language.navbar.logout : english.navbar.logout}
+                </Button>
+            </div>
         </div>
     );
 }

@@ -37,19 +37,19 @@ export const userReducer = (state: any, action: any): UserStateType => {
                 loading: true,
                 error: false,
                 data: undefined
-            }
+            };
         case ACTION_TYPES.FETCH_SUCCESS:
             return {
                 loading: false,
                 error: false,
                 data: action.payload
-            }
+            };
         case ACTION_TYPES.FETCH_ERROR:
             return {
                 loading: false,
                 error: true,
                 data: undefined
-            }
+            };
         default:
             return state;
     }

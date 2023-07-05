@@ -4,7 +4,7 @@ import Navbar from "./components/navbar/Navbar";
 import Home from "./views/Home";
 import Users from "./views/Users";
 import RedirectHandler from "./RedirectHandler";
-import {CompactUser, userSettings, UserSettingsType} from "./store/store";
+import {userSettings, UserSettingsType} from "./store/store";
 import axios from 'axios';
 import {MedalInterface} from "./interfaces/MedalsInterface";
 import {ThemeProvider, createTheme} from '@mui/material/styles';
@@ -55,59 +55,58 @@ const darkTheme = createTheme({
     },
 });
 const App = () => {
-    const logged = userSettings((state: UserSettingsType) => state.logged);
-    const toLog = userSettings((state: UserSettingsType) => state.toLog);
-    const setUser = userSettings((state: UserSettingsType) => state.setUser);
-    const [medals, setMedals] = useState<{ [key: string]: MedalInterface[] }>({});
-    const getMedals = async () => {
-        const response = await fetch(`http://localhost:5000/getMedals`);
-        const data = await response.json();
-        data.sort((a: any, b: any) => {
-            if (a.Grouping === b.Grouping) {
-                return parseInt(a.value, 10) - parseInt(b.value, 10);
-            }
-            return a.Grouping.localeCompare(b.Grouping);
-        });
-        const categoryArrays: { [key: string]: MedalInterface[] } = {};
-        for (const obj of data) {
-            if (categoryArrays[obj.Grouping]) {
-                // Category array already exists, push the object to it
-                categoryArrays[obj.Grouping].push(obj);
-            } else {
-                // Category array doesn't exist, create a new array with the object
-                categoryArrays[obj.Grouping] = [obj];
-            }
-        }
-        setMedals(categoryArrays);
-    }
-    useEffect(() => {
-        getMedals().then();
-    }, [])
-    useEffect(() => {
-        if (!logged) {
-            axios.get('http://localhost:5000/login')
-                .then((res) => {
-                    console.log(res);
-                    const userData: CompactUser = res.data;
-                    console.log(userData)
-                    setUser(userData);
-                })
-                .catch(error => {
-                    if (error.response) {
-                        // The request was made, but the server responded with an error status code
-                        console.log(error.response.data);
-                        console.log(error.response.status);
-                    } else if (error.request) {
-                        // The request was made, but no response was received
-                        console.log(error.request);
-                    } else {
-                        // Something happened in setting up the request that triggered an Error
-                        console.log('Error', error.message);
+    axios.defaults.withCredentials = true;
+
+    const setSessionUser = userSettings((state: UserSettingsType) => state.setSessionUser);
+    const [medalsSorted, setMedalsSorted] = useState<{ [key: string]: MedalInterface[] }>({});
+    const [medals, setMedals] = useState<any[]>([]);
+
+    function getMedals() {
+        axios.get('http://localhost:5000/getMedals')
+            .then((res) => {
+                const data = res.data;
+                data.sort((a: any, b: any) => {
+                    if (a.Grouping === b.Grouping) {
+                        return parseInt(a.value, 10) - parseInt(b.value, 10);
                     }
-                    console.log(error.config);
+                    return a.Grouping.localeCompare(b.Grouping);
                 });
-        }
-    }, [toLog]);
+                const categoryArrays: { [key: string]: MedalInterface[] } = {};
+                for (const obj of data) {
+                    if (categoryArrays[obj.Grouping]) {
+                        categoryArrays[obj.Grouping].push(obj);
+                    } else {
+                        categoryArrays[obj.Grouping] = [obj];
+                    }
+                }
+                setMedalsSorted(categoryArrays);
+                data.sort((a: any, b: any) => {
+                    return parseInt(a.MedalID) - parseInt(b.MedalID);
+                });
+                setMedals(data);
+            })
+            .catch((err) => {
+                console.error(err);
+            })
+    }
+
+    function isLogged() {
+        axios.get("http://localhost:5000/check")
+            .then((res) => {
+                if (res.data.logged) {
+                    console.log(res.data);
+                    setSessionUser(res.data.user)
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+            })
+    }
+
+    useEffect(() => {
+        isLogged()
+        getMedals()
+    }, [])
     return (
         <> <ThemeProvider theme={darkTheme}>
             <CssBaseline/>
@@ -121,16 +120,16 @@ const App = () => {
                 <main className="d-flex flex-column" style={
                     {
                         width: '100%',
-                        backdropFilter: "blur(1px)",
+                        backdropFilter: "blur(1px) brightness(40%)",
                         overflowY: "scroll",
                         marginTop: 56
                     }}>
-                    <DevelopBanner develop={true}/>
+                    <DevelopBanner develop={false}/>
                     <Routes>
                         <Route path="/oauth-redirect" element={<RedirectHandler/>}/>
                         <Route path="/" element={<Home/>}/>
                         <Route path="/users/:urlUsername?/:urlMode?"
-                               element={<Users medals={medals}/>}/>
+                               element={<Users medals={medals} medalsSorted={medalsSorted}/>}/>
                     </Routes>
                 </main>
             </div>

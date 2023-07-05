@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    lang: {
+        name: String,
+        code: String,
+    },
     ranks: {
         xh: Number,
         x: Number,

@@ -1,35 +1,39 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const session = require('express-session');
-const cookieParser = require('cookie-parser');
+
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+
+const mongoose = require('mongoose');
+const User = require("./User");
 
 const dotenv = require('dotenv');
 const path = require('path');
-const User = require("./User");
 const fs = require('fs');
 
 const app = express();
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-}));
+
 app.use(express.json());
+app.use(cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST"],
+    credentials: true
+}));
 app.use(cookieParser());
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended: true}))
+
 app.use(session({
-    secret: "nofuckingwaycookiezifcbluezenith727!!!",
+    key: "userId",
+    secret: "wysi",
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false,
-        maxAge: 1000 * 60 * 60 * 24 * 30
-    },
-}));
-
+        expires: 60 * 60 * 24,
+    }
+}))
 dotenv.config();
-const discordToken = process.env.DISCORD_TOKEN;
+
 const tokenFilePath = path.resolve(__dirname, 'token');
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -83,6 +87,7 @@ const updateUser = async (userId, username, userRanks, countryRank, mode) => {
             let response = {};
             if (await User.exists({userId: userId})) {
                 const user = await User.findOne({userId: userId});
+                user.username = username;
                 await pushOrReplaceObjects(user.modes[mode].rankHistory, objectRanks);
                 await pushOrReplaceObjects(user.modes[mode].countryRankHistory, [currentCountryRank]);
                 user.modes[mode].rankHistory.sort((a, b) => a.date - b.date);
@@ -278,7 +283,19 @@ const getUserCompact = async (username) => {
                 headers,
             });
             const data = await response.json();
-            return data.users[0];
+            const responseUser = data.users[0];
+            try {
+                if (await User.exists({userId: data.users[0].id})) {
+                    const user = await User.findOne({userId: data.users[0].id});
+                    responseUser.lang = {
+                        name: user.lang.name,
+                        code: user.lang.code,
+                    };
+                }
+            } catch (err) {
+                console.error(err)
+            }
+            return responseUser;
         } catch (error) {
             return {error: error.toString()}
         }
@@ -328,6 +345,14 @@ app.get('/usrInfo/:username/:mode', async function (req, res) {
         });
         const data = await response.json();
         data.db_info = await updateUser(data.id, data.username, data.rank_history.data, data.statistics.country_rank, mode);
+        // translators
+        data.customBadges = {};
+        if ([17018032].includes(data.id)) {
+            data.customBadges.developer = true;
+        }
+        if ([17018032, 17524565, 12941954, 7161345, 14623152, 18674051, 17517577, 20405189, 13431764, 26688450, 9211305, 15165858, 14284545, 7424967, 8685250, 9552883, 12526902, 15525103, 16147953].includes(data.id)) {
+            data.customBadges.translator = true;
+        }
         res.status(200).send(data);
     } catch (err) {
         res.status(500).send({error: err})
@@ -401,14 +426,23 @@ app.get('/getMedals', async function (req, res) {
 app.get('/oauth-redirect/:userCode/', async function (req, res) {
     let code = req.params['userCode'];
     try {
-        const response = await axios.post('https://osu.ppy.sh/oauth/token', {
+        const body = {
             client_id: clientId,
             client_secret: clientSecret,
             redirect_uri: 'http://localhost:3000/oauth-redirect',
             code: code,
             grant_type: 'authorization_code',
-        });
-        const accessToken = response.data.access_token;
+        };
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        };
+        const response = await fetch('https://osu.ppy.sh/oauth/token', requestOptions);
+        const data = await response.json();
+        const accessToken = data.access_token;
         try {
             const url = new URL(
                 "https://osu.ppy.sh/api/v2/me/osu"
@@ -426,10 +460,9 @@ app.get('/oauth-redirect/:userCode/', async function (req, res) {
             if (data?.id) {
                 req.session.userId = data.id;
                 const userCompact = await getUserCompact(req.session.userId);
-                console.log(req.session.userId)
-                res.status(200).json(userCompact);
+                res.status(200).send({error: false, user: userCompact});
             } else {
-                res.status(200).json({msg: "error"});
+                res.status(400).send({error: true, msg: "error"});
             }
         } catch (error) {
             console.error(error);
@@ -440,19 +473,37 @@ app.get('/oauth-redirect/:userCode/', async function (req, res) {
         res.status(400).send('Bad Request');
     }
 });
-app.get('/login', async (req, res) => {
-    const user = req.session.userId;
-    if (user) {
+app.get('/check', async function (req, res) {
+    if (req.session.userId) {
         const userCompact = await getUserCompact(req.session.userId);
-        res.status(200).send(userCompact);
+        res.status(200).send({logged: true, user: userCompact})
     } else {
-        res.status(401).send('Unauthorized');
+        res.status(200).send({logged: false})
     }
 });
 app.get('/logout', async (req, res) => {
     req.session.destroy();
+    req.session = null
     res.status(200);
 });
+app.post('/setLang', async function (req, res) {
+    const {userId, name, code} = req.body;
+    if (userId === req.session.userId) {
+        try {
+            if (await User.exists({userId: userId})) {
+                const user = await User.findOne({userId: userId});
+                user.lang = {
+                    name: name,
+                    code: code,
+                };
+                user.save()
+            }
+        } catch (err) {
+            console.error(err)
+            req.status(200).send({error: true, msg: err})
+        }
+    }
+})
 app.get('/image/:id/:url', async (req, res) => {
     const id = req.params['id'];
     const imageUrl = req.params['url'];

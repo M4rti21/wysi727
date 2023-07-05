@@ -1,9 +1,12 @@
 import React from "react";
 import Medal from "../Medal";
 import {ColorSettingsType, colorsSettings, modeSettings, ModeSettingsType} from "../../../store/store";
-import {ActiveLanguageType, languageStore} from "../../../store/languages";
+import {ActiveLanguageType, languageStore} from "../../../store/store";
+import {Tab, Tabs} from "@mui/material";
+import {MedalInterface} from "../../../interfaces/MedalsInterface";
 
 interface propsInterface {
+    medalsSorted: { [key: string]: MedalInterface[] };
     medals: any;
     userMedals: any[];
     userId: number;
@@ -11,15 +14,17 @@ interface propsInterface {
 
 const MedalsPanel = (props: propsInterface) => {
     const language = languageStore((state: ActiveLanguageType) => state.text);
+    const english = languageStore((state: ActiveLanguageType) => state.english);
+
     const colors = colorsSettings((state: ColorSettingsType) => state.colors);
     const mode = modeSettings((state: ModeSettingsType) => state.mode);
     let combinedLength = 0;
-    for (const category in props.medals) {
-        const categoryArray = props.medals[category];
+    for (const category in props.medalsSorted) {
+        const categoryArray = props.medalsSorted[category];
         combinedLength += categoryArray?.length;
     }
     const achievedMedalsCount: { [category: string]: number } = {};
-    Object.entries(props.medals)?.forEach(([category, medals]) => {
+    Object.entries(props.medalsSorted)?.forEach(([category, medals]) => {
         achievedMedalsCount[category] = 0;
         props.userMedals?.forEach((achievedMedal) => {
             if ((medals as any[])?.find((medal) => parseInt(medal.MedalID) === achievedMedal.achievement_id)) {
@@ -27,16 +32,46 @@ const MedalsPanel = (props: propsInterface) => {
             }
         });
     });
+
+    const sortedArray = props.userMedals.sort((a, b) => {
+        const dateA = new Date(a.achieved_at);
+        const dateB = new Date(b.achieved_at);
+        return dateA.getTime() - dateB.getTime();
+    });
+
+    const lastTenMedals = sortedArray
+        .reverse()
+        .slice(0, 10)
+        .map(obj => obj.achievement_id);
+
+    const matchingMedals = lastTenMedals.map(id =>
+        props.medals.find((medal: any) => parseInt(medal.MedalID) === id)
+    );
+    const rarestMedal = props.userMedals
+        .map(obj => obj.achievement_id)
+        .map(id => props.medals.find((medal: any) => String(medal.MedalID) === String(id)))
+        .reduce((rarest, medal) => {
+            if (!rarest || (medal && medal.Rarity < rarest.Rarity)) {
+                return medal;
+            }
+            return rarest;
+        }, null);
+
+    const [medalsTabValue, setMedalsTabValue] = React.useState(3);
+    const handleMedalsChange = (event: any, newValue: number) => {
+        setMedalsTabValue(newValue);
+    };
     return (
         <div className="col-12 row m-0 p-3">
-            <div className={"d-flex flex-row align-items-center"}>
+            <div className="d-flex flex-row align-items-center">
                 <div className={"d-flex flex-row align-items-center"}>
                     <a href={`https://osekai.net/profiles/?user=${props.userId}&mode=${mode}`}
                        target={"_blank"}
                        data-tooltip-id="reactTooltip"
                        data-tooltip-content={`See profile on osekai!`}>
                         <div className={"me-2"}>
-                            <svg width="24" height="24" viewBox="0 0 102 110" xmlns="http://www.w3.org/2000/svg" fill={colors.ui.font}>
+                            <svg width="24" height="24" viewBox="0 0 102 110" xmlns="http://www.w3.org/2000/svg"
+                                 fill={colors.ui.font}>
                                 <path
                                     d="M51 11.6908C54.067 11.6908 57.0464 12.4879 59.6753 13.9936L81.8454 26.9243C87.1907 30.0242 90.5206 35.781 90.5206 42.0692V67.9308C90.5206 74.1304 87.1907 79.9758 81.8454 83.0757L59.5876 96.0064C56.9588 97.5121 53.9794 98.3092 50.9124 98.3092C47.8454 98.3092 44.866 97.5121 42.2371 96.0064L20.1546 83.0757C14.8093 79.9758 11.4794 74.219 11.4794 67.9308V42.0692C11.4794 35.8696 14.8093 30.0242 20.1546 26.9243L42.3247 13.9936C44.9536 12.4879 47.933 11.6908 51 11.6908ZM51 0C46.0052 0 41.0103 1.3285 36.6289 3.89694L14.3711 16.8277C5.52062 22.0531 0 31.6184 0 42.0692V67.9308C0 78.2931 5.52062 87.9469 14.3711 93.1723L36.5412 106.103C41.0103 108.672 46.0052 110 50.9124 110C55.8196 110 60.9021 108.672 65.2835 106.103L87.4536 93.1723C96.3918 87.9469 101.825 78.3816 101.825 67.9308V42.0692C101.825 31.7069 96.3041 22.0531 87.4536 16.8277L65.3711 3.89694C60.9021 1.3285 55.9948 0 51 0Z"/>
                                 <path opacity="0.9"
@@ -46,29 +81,60 @@ const MedalsPanel = (props: propsInterface) => {
                             </svg>
                         </div>
                     </a>
-                    <div>{language.user.top.medals}:</div>
+                    <div>{language?.user?.top?.medals ? language.user.top.medals : english.user.top.medals}:</div>
                 </div>
                 <div className={"ms-auto"}>
                     ({props.userMedals?.length}/{combinedLength})
                     - {(props.userMedals?.length / combinedLength * 100).toFixed(0)}%
                 </div>
             </div>
-            {Object.entries(props.medals).map(([category, medals]) => (
-                <div key={category} className={"p-3 mt-2"}>
-                    <div className={"mb-2 d-flex flex-row justify-content-between"}>
-                        <div>{category}:</div>
-                        <div>({achievedMedalsCount[category]}/{(medals as any[])?.length})
-                            - {(achievedMedalsCount[category] / (medals as any[])?.length * 100).toFixed(0)}%
-                        </div>
-                    </div>
-                    <div className={"d-flex flex-row flex-wrap gap-1 justify-content-center"}>
-                        {(medals as any[]).map((medal: any, index: number) => (
+            <div className="m-3 row">
+                <div className="col-9">
+                    <div className="mb-2">{language?.user?.medals?.recent ? language.user.medals.recent : english.user.medals.recent}:</div>
+                    <div className="d-flex flex-row gap-2 overflow-hidden">
+                        {(matchingMedals as any[]).map((medal: any, index: number) => (
                             <Medal thisMedal={medal} userMedals={props.userMedals} key={index}/>
                         ))}
                     </div>
                 </div>
-            ))}
+                <div className="col-3">
+                    <div className="mb-2">{language?.user?.medals?.rarest ? language.user.medals.rarest : english.user.medals.rarest}:</div>
+                    <div><Medal thisMedal={rarestMedal} userMedals={props.userMedals}/></div>
+                </div>
+
+            </div>
+            <Tabs
+                value={medalsTabValue}
+                onChange={handleMedalsChange}
+                variant="fullWidth"
+                indicatorColor="primary"
+                textColor="primary">
+                {Object.entries(props.medalsSorted).map(([category, medals]) => (
+                    <Tab key={category} label={
+                        <div>{category}<br/>{(achievedMedalsCount[category] / (medals as any[])?.length * 100).toFixed(0)}%
+                        </div>}/>
+                ))}
+            </Tabs>
+            {Object.entries(props.medalsSorted).map(([category, medals], key: number) => (
+                    <div key={key}>
+                        {key === medalsTabValue &&
+                            <div className="p-3 mt-2">
+                                <div className={"mb-2 d-flex flex-row justify-content-center"}>
+                                    <div>({achievedMedalsCount[category]}/{(medals as any[])?.length})
+                                        - {(achievedMedalsCount[category] / (medals as any[])?.length * 100).toFixed(0)}%
+                                    </div>
+                                </div>
+                                <div className={"d-flex flex-row flex-wrap gap-1 justify-content-center"}>
+                                    {(medals as any[]).map((medal: any, index: number) => (
+                                        <Medal thisMedal={medal} userMedals={props.userMedals} key={index}/>
+                                    ))}
+                                </div>
+                            </div>}
+                    </div>
+                )
+            )}
         </div>
-    );
+    )
+        ;
 }
 export default MedalsPanel;

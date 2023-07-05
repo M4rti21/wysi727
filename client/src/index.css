@@ -121,7 +121,7 @@
 body, html {
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 main {
@@ -215,10 +215,9 @@ a:hover {
 }
 
 .hover-container {
-    display: none;
+    display: flex;
     position: absolute;
-    top: 48px;
-    transform: translateY(-100%);
+    top: 54px;
     transition: transform 0.5s ease;
     flex-direction: column;
     justify-content: center;
@@ -236,11 +235,6 @@ a:hover {
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
-}
-
-.hover-button:hover .hover-container {
-    display: flex;
-    transform: translateY(0);
 }
 
 .volume-slider::-webkit-slider-thumb {

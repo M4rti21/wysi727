@@ -10,6 +10,16 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import CheckIcon from '@mui/icons-material/Check';
+import {ActiveLanguageType, languageStore} from "../../store/store";
+import {IconButton} from "@mui/material";
+import StarIcon from '@mui/icons-material/Star';
+import TimerIcon from '@mui/icons-material/Timer';
+import HeadphonesIcon from '@mui/icons-material/Headphones';
+import ShareIcon from '@mui/icons-material/Share';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import LocalMoviesIcon from '@mui/icons-material/LocalMovies';
 
 interface propsInterface {
     data: ItemsEntity;
@@ -17,6 +27,9 @@ interface propsInterface {
 }
 
 const Score = (props: propsInterface) => {
+    const language = languageStore((state: ActiveLanguageType) => state.text);
+    const english = languageStore((state: ActiveLanguageType) => state.english);
+
     const captureScreenshot = () => {
         const element = document.getElementById(props.num.toString());
         if (element) {
@@ -201,16 +214,25 @@ const Score = (props: propsInterface) => {
                             </div>
                         </div>
                         <div className="d-flex flex-row gap-2" style={{fontSize: 12}}>
-                            <div>
-                                <i className="bi bi-star-fill me-1"></i>{props.data.beatmap.difficulty_rating}
+                            <div className="d-flex flex-row gap-1 align-items-center">
+                                <StarIcon sx={{fontSize: 14}}
+                                          data-tooltip-id={"reactTooltip"}
+                                          data-tooltip-content={language?.user?.top?.stars ? language.user.top.stars : english.user.top.stars}/>
+                                <div>{props.data.beatmap.difficulty_rating}</div>
                             </div>
                             <div>|</div>
-                            <div>
-                                <i className="bi bi-stopwatch me-1"></i>{`${Math.floor(props.data.beatmap.total_length / 60)}:${Math.floor(props.data.beatmap.total_length - Math.floor(props.data.beatmap.total_length / 60) * 60).toString().padStart(2, '0')}`}
+                            <div className="d-flex flex-row gap-1 align-items-center">
+                                <TimerIcon sx={{fontSize: 14}}
+                                           data-tooltip-id={"reactTooltip"}
+                                           data-tooltip-content={language?.user?.scores?.duration ? language.user.scores.duration : english.user.scores.duration}/>
+                                <div>{`${Math.floor(props.data.beatmap.total_length / 60)}:${Math.floor(props.data.beatmap.total_length - Math.floor(props.data.beatmap.total_length / 60) * 60).toString().padStart(2, '0')}`}</div>
                             </div>
                             <div>|</div>
-                            <div>
-                                <i className="bi bi-music-note-beamed me-1"></i>{props.data.beatmap.bpm}
+                            <div className="d-flex flex-row gap-1 align-items-center">
+                                <HeadphonesIcon sx={{fontSize: 14}}
+                                                data-tooltip-id={"reactTooltip"}
+                                                data-tooltip-content={language?.user?.scores?.bpm ? language.user.scores.bpm : english.user.scores.bpm}/>
+                                <div>{props.data.beatmap.bpm}</div>
                             </div>
                         </div>
                         <div className="d-flex justify-content-between align-items-center">
@@ -256,37 +278,37 @@ const Score = (props: propsInterface) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="d-flex flex-row justify-content-between">
-                            <div className="d-flex flex-row gap-1">
-                                <div>#{props.num + 1} |</div>
-                                <button onClick={togglePlayback}
-                                        style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}>
+                        <div className="d-flex flex-row justify-content-between p-0 m-0">
+                            <div className="d-flex flex-row align-items-center justify-content-center">
+                                <div className="me-2">#{props.num + 1}</div>
+                                <IconButton onClick={togglePlayback}
+                                            className="m-0"
+                                            style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}>
                                     <audio ref={audioRef} src={`https:${props.data.beatmapset.preview_url}`}/>
-                                    {isPlaying ? <i className="bi bi-pause-fill"></i> :
-                                        <i className="bi bi-play-fill"></i>}
-                                </button>
-                                <button style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}>
+                                    {isPlaying ? <PauseIcon sx={{fontSize: 20}}/> :
+                                        <PlayArrowIcon sx={{fontSize: 20}}/>}
+                                </IconButton>
+                                <IconButton style={{backgroundColor: "#00000000", border: "none", color: '#ffffff',height: 36, width: 36}}>
                                     <a href={`osu://b/${props.data.beatmap.id}`}
                                        className="text-decoration-none"
                                        style={{color: '#ffffff'}}>
-                                        <i className="bi bi-download" data-turbolinks="false"></i>
+                                        <FileDownloadIcon sx={{fontSize: 20, height: 20, width: 20}} className="d-flex align-items-center justify-content-center"/>
                                     </a>
-                                </button>
-                                {props.data.replay ?
-                                    (<button
-                                        style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}>
-                                        <a href={`https://osu.ppy.sh/scores/osu/${props.data.best_id}/`} target="_blank"
-                                           rel="noreferrer"
-                                           style={{color: '#ffffff'}}
-                                           className="text-decoration-none">
-                                            <i className="bi bi-film"></i>
-                                        </a>
-                                    </button>) : ""}
-                                <button type="button"
-                                        style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}
-                                        onClick={captureScreenshot}>
-                                    <i className="bi bi-camera"></i>
-                                </button>
+                                </IconButton>
+                                <IconButton
+                                    style={{backgroundColor: "#00000000", border: "none", color: '#ffffff',height: 36, width: 36}}>
+                                    <a href={`https://osu.ppy.sh/scores/osu/${props.data.best_id}/`} target="_blank"
+                                       rel="noreferrer"
+                                       style={{color: '#ffffff'}}
+                                       className="text-decoration-none">
+                                        <LocalMoviesIcon sx={{fontSize: 20, height: 20, width: 20}} className="d-flex align-items-center justify-content-center"/>
+                                    </a>
+                                </IconButton>
+                                <IconButton type="button"
+                                            style={{backgroundColor: "#00000000", border: "none", color: '#ffffff'}}
+                                            onClick={captureScreenshot}>
+                                    <ShareIcon sx={{fontSize: 20}}/>
+                                </IconButton>
                             </div>
                             <div className="d-flex flex-row gap-2 align-items-center">
                                 <div className="d-flex flex-row flex-wrap gap-1">

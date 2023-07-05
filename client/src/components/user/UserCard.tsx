@@ -34,7 +34,7 @@ import WatchLaterIcon from '@mui/icons-material/WatchLater';
 import StarIcon from '@mui/icons-material/Star';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import {ActiveLanguageType, languageStore} from "../../store/languages";
+import {ActiveLanguageType, languageStore} from "../../store/store";
 import Divider from '@mui/material/Divider';
 
 
@@ -43,7 +43,8 @@ Chart.register(...registerables);
 
 interface userData {
     data: User;
-    medals: { [key: string]: MedalInterface[] };
+    medals: any;
+    medalsSorted: { [key: string]: MedalInterface[] };
     scores: ScoresType;
 }
 
@@ -53,6 +54,8 @@ type ModeModifier = 'ctrl' | 'alt' | 'shift' | 'meta';
 type AxisType = "time" | undefined;
 const UserCard = (props: userData) => {
     const language = languageStore((state: ActiveLanguageType) => state.text);
+    const english = languageStore((state: ActiveLanguageType) => state.english);
+
     const colors = colorsSettings((state: ColorSettingsType) => state.colors);
     const mode = modeSettings((state: ModeSettingsType) => state.mode);
 
@@ -585,11 +588,11 @@ const UserCard = (props: userData) => {
     calculateScores();
     const skillsData = {
         labels: [
-            `${language.user.top.consistency} - ${constScore}`,
-            `${language.user.top.speed} - ${speedScore}`,
-            `${language.user.top.aim} - ${aimScore}`,
-            `${language.user.top.stars} - ${starsScore}`,
-            `${language.user.top.acc} - ${accScore}`
+            `${language?.user?.top?.consistency ? language.user.top.consistency : english.user.top.consistency} - ${constScore}`,
+            `${language?.user?.top?.speed ? language.user.top.speed : english.user.top.speed} - ${speedScore}`,
+            `${language?.user?.top?.aim ? language.user.top.aim : english.user.top.aim} - ${aimScore}`,
+            `${language?.user?.top?.stars ? language.user.top.stars : english.user.top.stars} - ${starsScore}`,
+            `${language?.user?.top?.acc ? language.user.top.acc : english.user.top.acc} - ${accScore}`
         ],
         datasets: [{
             label: 'Skill set',
@@ -702,8 +705,6 @@ const UserCard = (props: userData) => {
     useEffect(() => {
         countryLog();
         document.title = `${props.data.username} · wysi727`;
-        console.log(scoresHits)
-        console.log(scoresRanks)
         if (div1Ref.current && div2Ref.current) {
             const div1Height = div1Ref.current.offsetHeight;
             div2Ref.current.style.height = `${div1Height}px`;
@@ -737,9 +738,10 @@ const UserCard = (props: userData) => {
                                     variant="fullWidth"
                                     onChange={handleHistoryChange}
                                     indicatorColor="primary" textColor="primary">
-                                    <Tab label={language.user.middle.graphs.globalHistory}/>
-                                    <Tab label={language.user.middle.graphs.countryHistory}/>
-                                    <Tab label={language.user.middle.graphs.playsHistory}/>
+                                    <Tab
+                                        label={language?.user?.middle?.graphs?.globalHistory ? language.user.middle.graphs.globalHistory : english.user.middle.graphs.globalHistory}/>
+                                    <Tab label={language?.user?.middle?.graphs?.countryHistory ? language.user.middle.graphs.countryHistory : english.user.middle.graphs.countryHistory}/>
+                                    <Tab label={language?.user?.middle?.graphs?.playsHistory ? language.user.middle.graphs.playsHistory : english.user.middle.graphs.playsHistory}/>
                                 </Tabs>
                                 <div className="col-12 row m-0 p-3 justify-content-center"
                                      style={{
@@ -760,10 +762,11 @@ const UserCard = (props: userData) => {
                         </>
                     }
                     <div className="row">
-                        <div className="m-2">{language.user.middle.graphs.top100}:</div>
+                        <div className="m-2">{language?.user?.middle?.graphs?.top100 ? language.user.middle.graphs.top100 : english.user.middle.graphs.top100}:</div>
                         <div className="row">
-                            <div className="col-12 col-lg-6 d-flex flex-column p-3 justify-content-start align-items-center">
-                                <div>{language.user.middle.graphs.topHitRatios}</div>
+                            <div
+                                className="col-12 col-lg-6 d-flex flex-column p-3 justify-content-start align-items-center">
+                                <div>{language?.user?.middle?.graphs?.topHitRatios ? language.user.middle.graphs.topHitRatios : english.user.middle.graphs.topHitRatios}</div>
                                 <div className="m-3" style={{height: 200, width: 200}}>
                                     <Doughnut data={hitData} options={doughnutOptions}/>
                                 </div>
@@ -800,7 +803,7 @@ const UserCard = (props: userData) => {
                             </div>
                             <div
                                 className="col-12 col-lg-6 d-flex flex-column p-3 justify-content-start align-items-center">
-                                <div>{language.user.middle.graphs.topRankRatios}</div>
+                                <div>{language?.user?.middle?.graphs?.topRankRatios ? language.user.middle.graphs.topRankRatios : english.user.middle.graphs.topRankRatios}</div>
                                 <div className="m-3" style={{height: 200, width: 200}}>
                                     <Doughnut data={rankData} options={doughnutOptions}/>
                                 </div>
@@ -844,7 +847,7 @@ const UserCard = (props: userData) => {
                                      height: 250
                                  }}>
                                 <div className="d-flex flex-row justify-content-between">
-                                    <h6>{language.user.middle.graphs.top100plays}:</h6>
+                                    <h6>{language?.user?.middle?.graphs?.top100plays ? language.user.middle.graphs.top100plays : english.user.middle.graphs.top100plays}:</h6>
                                 </div>
                                 <div className="w-100 flex-grow-1">
                                     <Bar data={ppData} options={ppDataOptions}/>
@@ -853,10 +856,8 @@ const UserCard = (props: userData) => {
                         </div>
                     </div>
                     <Divider/>
-                    <div className="">
-                        <MedalsPanel medals={props.medals} userMedals={props.data.user_achievements}
-                                     userId={props.data.id}/>
-                    </div>
+                    <MedalsPanel medals={props.medals} userMedals={props.data.user_achievements}
+                                 userId={props.data.id} medalsSorted={props.medalsSorted}/>
                 </div>
                 <div className="rounded m-0 col-md-4 col-12 d-flex flex-column"
                      style={{backgroundColor: colors.ui.bg}}>
@@ -868,16 +869,16 @@ const UserCard = (props: userData) => {
                             indicatorColor="primary" textColor="primary">
                             <Tab label={<PushPinIcon/>}
                                  data-tooltip-id={"reactTooltip"}
-                                 data-tooltip-content={"Pinned Scores"}/>
+                                 data-tooltip-content={language?.user?.scores?.pinned ? language.user.scores.pinned : english.user.scores.pinned}/>
                             <Tab label={<StarIcon/>}
                                  data-tooltip-id={"reactTooltip"}
-                                 data-tooltip-content={"First Place Scores"}/>
+                                 data-tooltip-content={language?.user?.scores?.first ? language.user.scores.first : english.user.scores.first}/>
                             <Tab label={<SignalCellularAltIcon/>}
                                  data-tooltip-id={"reactTooltip"}
-                                 data-tooltip-content={"Best Scores"}/>
+                                 data-tooltip-content={language?.user?.scores?.best ? language.user.scores.best : english.user.scores.best}/>
                             <Tab label={<WatchLaterIcon/>}
                                  data-tooltip-id={"reactTooltip"}
-                                 data-tooltip-content={"Recent Scores"}/>
+                                 data-tooltip-content={language?.user?.scores?.recent ? language.user.scores.recent : english.user.scores.recent}/>
                         </Tabs>
                     </div>
                     <div className="m-0 flex-grow-1" style={{overflowY: "scroll"}} ref={div2Ref}>
